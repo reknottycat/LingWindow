@@ -1,0 +1,150 @@
+[package]
+name = "audioscript"
+version = "0.6.2"
+description = "AudioScript 声稿 — 离线优先语音转写，带悬浮流式字幕窗"
+authors = ["Nico"]
+license = "MIT"
+edition = "2021"
+# tauri-plugin-single-instance / global-shortcut 要求 >= 1.90
+rust-version = "1.90"
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+# 可执行文件名 = macOS 眼里的应用名：非 bundle 进程（dev 直接跑二进制）的 Dock 标签与 ⌘-Tab
+# 取的就是它，全小写会在 Dock 上显示成 audioscript。
+[[bin]]
+name = "AudioScript"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# 去掉 Windows 上 resource_dir() 返回的 `\\?\` 前缀（CTranslate2 不认 verbatim 路径）。
+dunce = "1"
+# ⚠️ macos-private-api 是 tauri-nspanel 换 NSPanel 的前提，代价是无法上架 Mac App Store
+# （本项目走 GitHub Releases 分发，可接受）。
+tauri = { version = "2.12", features = ["tray-icon", "image-png", "macos-private-api"] }
+
+# ⚠️ 必须第一个注册，否则会有两个托盘图标、两条音频管线。
+tauri-plugin-single-instance = "2"
+
+# macOS 上普通组合键走 Carbon RegisterEventHotKey，不需要辅助功能权限；
+# 只有 5 个媒体键才会走 CGEventTap（那条路才要权限）。
+tauri-plugin-global-shortcut = "2"
+
+# ⚠️ 不要换成第三方 `sherpa-rs`——已废弃停维护。
+sherpa-onnx = "1.13"
+
+# ⚠️⚠️ 绝不要开 `sentencepiece` feature：它拉进的 sentencepiece-sys 会编译 darts-clone，
+# 与 sherpa 静态包里内嵌的那一份同名符号冲突。链接器不报错、静默选一份，
+# 运行时 sherpa 踩到不匹配实现抛 `Ort::Exception`，进程直接终止。
+# 走 `tokenizers`（纯 Rust，无 C++）没有这个问题，代价是模型需自带 tokenizer.json
+# ——见 scripts/fetch-mt-model.mjs。
+# `default-features = false` 是为了去掉 macOS 上无意义的 `cuda-small-binary`。
+#
+# ⚠️ 线性代数后端 MUST 按平台分表（见下方 target 表）。`accelerate` 是 Apple 专属，
+# ct2rs 的 build.rs 对它**没有 target 守卫**：开了就无条件 `WITH_ACCELERATE=ON`
+# 并请求链接 Accelerate 框架，在 Windows/Linux 上直接以
+# `Could NOT find BLAS` 失败。各平台该开哪几个见 ct2rs README 的 feature 表。
+
+# ct2rs 的 Tokenizer trait 以 anyhow::Result 为返回类型。
+anyhow = "1"
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["sync", "time"] }
+
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
+# 系统语言探测（跟随系统界面语言）。Cargo.lock 里本来就有这个传递依赖。
+sys-locale = "0.3"
+# 启动日志里的 OS 名称与版本（Windows/macOS/Linux 统一）。Cargo.lock 里本来就有这个传递依赖。
+os_info = "3"
+
+typeshare = "1"
+uuid = { version = "1", features = ["v4"] }
+flexaudio = "0.5.4"
+tauri-plugin-autostart = "2.7.0"
+tauri-plugin-dialog = "2"
+# 自动更新：构建时未设 TAURI_SIGNING_PRIVATE_KEY 不会产出带签名的更新包，CI 见 build.yml。
+tauri-plugin-updater = "2"
+# 匿名使用统计（Aptabase），事件全部由本项目显式上报，插件自身不采集任何东西。
+tauri-plugin-aptabase = "1.3"
+
+# 可选模型下载：阻塞式 HTTPS + 流式解压 + 校验（都已存在于 Cargo.lock）。
+ureq = { version = "2.12", default-features = false, features = ["tls", "gzip", "proxy-from-env"] }
+tar = "0.4"
+flate2 = "1"
+bzip2 = "0.5"
+sha2 = "0.10"
+zhconv = { version = "0.4", features = ["opencc"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+# macOS 26+ 的系统翻译（Translation.framework）；语言包由系统管理，应用不下载。
+translation-rs = "0.5"
+# Apple Silicon 的推荐组合就是 accelerate + ruy。
+ct2rs = { version = "0.10", default-features = false, features = [
+    "tokenizers",
+    "accelerate",
+    "ruy",
+] }
+
+# ⚠️ 不要改用 `flexaudio::devices()`：它把麦克风与系统声音枚举合在一次调用里，而 macOS 上
+# 授权未决时麦克风枚举会整次失败（Microphone consent is undecided），
+# 导致只用系统声音的用户一个设备都看不到——而这是本产品的主场景。
+# 本 crate 的 list_output_devices() 只读设备属性，不需要授权。
+flexaudio-os-macos = "0.5.4"
+
+# 这是悬浮窗能浮在他人全屏应用之上的唯一途径（普通 NSWindow 不在那个 compositor group 里）。
+# ⚠️ 上游把 panel handle 标了 Send/Sync 但没真的保证主线程——原生写操作必须自己 run_on_main_thread。
+tauri-nspanel = { version = "2.1", default-features = false }
+
+# Tauri 只暴露布尔的 set_always_on_top，它映射到 NSFloatingWindowLevel(3)，盖不住他人全屏应用，
+# 故需直接调 NSWindow 的 level。
+objc2 = "0.6"
+
+# 模型下载要跟随系统代理：ureq 只认环境变量，macOS 的系统代理在 SCDynamicStore 里。
+core-foundation = "0.9"
+system-configuration = "0.7"
+
+# 麦克风授权状态查询与申请（AVCaptureDevice）。flexaudio-mic 内部的 status() 是 pub(crate)
+# 拿不到，而它公开的 preflight() 在授权未决时会弹窗并阻塞最多 30 秒，不能当查询用。
+objc2-foundation = "0.3"
+block2 = "0.6"
+
+[target.'cfg(not(target_os = "macos"))'.dependencies]
+# mkl 只在 GenuineIntel CPU 上启用（CTranslate2 的 cpu_is_genuine_intel 检查）。
+# 其余 CPU（AMD 等）少了 mkl 就一个 GEMM 后端都没有：LMT 硬编码的 int8_float32 在
+# 加载时直接报「Requested int8_float32 compute type…」，fp32 引擎也会在推理时
+# 报「No SGEMM backend on CPU」。ruy 是 ct2rs 默认特性里的跨厂商 int8/fp32 回退，
+# 不能省。
+ct2rs = { version = "0.10", default-features = false, features = [
+    "tokenizers",
+    "mkl",
+    "ruy",
+] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_Storage_FileSystem",
+    "Win32_System_SystemInformation",
+    "Win32_Security",
+    "Win32_System_Pipes",
+    "Win32_System_Threading",
+] }
+# flexaudio 的麦克风后端只接受 1~2 声道；多声道阵列（如 Intel 智音）由 audio/windows_mic.rs
+# 用 cpal 按原生格式采集后自己下混，因此这里需要直接依赖 cpal / rubato / rtrb。
+cpal = "0.16"
+rubato = "3"
+rtrb = "0.3"
+# Windows 的系统代理在注册表里，ureq 的 proxy-from-env 读不到。
+winreg = "0.56"

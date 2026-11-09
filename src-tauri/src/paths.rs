@@ -1,0 +1,817 @@
+use std::path::{Path, PathBuf};
+
+use tauri::{AppHandle, Manager};
+
+use crate::config::AsrModelTier;
+use crate::i18n::{tf, tr, Key};
+use crate::models::catalog::{self, AsrFormat, CatalogEntry};
+
+pub const ENV_MODEL_DIR: &str = "AUDIOSCRIPT_MODEL_DIR";
+pub const VAD_MODEL_FILE: &str = "silero_vad.onnx";
+
+#[derive(Debug, Clone)]
+pub struct ResolvedModelDir {
+    pub path: PathBuf,
+    pub via: ResolutionVia,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ResolutionVia {
+    EnvOverride,
+    BundledResource,
+    DevSourceTree,
+    UserData,
+}
+
+impl ResolutionVia {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::EnvOverride => "env-override",
+            Self::BundledResource => "bundled-resource",
+            Self::DevSourceTree => "dev-source-tree",
+            Self::UserData => "user-data",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ModelSearchRoots {
+    pub env: Option<PathBuf>,
+    pub bundled: Option<PathBuf>,
+    pub dev: Option<PathBuf>,
+    pub user: Option<PathBuf>,
+    pub user_fallback: Option<PathBuf>,
+}
+
+fn simplify(path: PathBuf) -> PathBuf {
+    dunce::simplified(&path).to_path_buf()
+}
+
+fn resolved(path: PathBuf, via: ResolutionVia) -> ResolvedModelDir {
+    ResolvedModelDir {
+        path: simplify(path),
+        via,
+    }
+}
+
+pub fn default_user_models_root(app: &AppHandle) -> Option<PathBuf> {
+    app.path()
+        .app_local_data_dir()
+        .ok()
+        .map(|dir| simplify(dir.join("models")))
+}
+
+pub fn custom_models_root(app: &AppHandle) -> Option<PathBuf> {
+    crate::prefs::load(app)
+        .models_dir
+        .map(PathBuf::from)
+        .filter(|p| p.is_absolute())
+        .map(simplify)
+}
+
+pub fn user_models_root(app: &AppHandle) -> Option<PathBuf> {
+    custom_models_root(app).or_else(|| default_user_models_root(app))
+}
+
+pub fn user_models_roots(app: &AppHandle) -> Vec<PathBuf> {
+    combine_user_roots(custom_models_root(app), default_user_models_root(app))
+}
+
+fn combine_user_roots(custom: Option<PathBuf>, default: Option<PathBuf>) -> Vec<PathBuf> {
+    let mut roots = Vec::new();
+    if let Some(custom) = custom {
+        roots.push(custom);
+    }
+    if let Some(default) = default {
+        if !roots.iter().any(|root| root == &default) {
+            roots.push(default);
+        }
+    }
+    roots
+}
+
+pub fn ensure_user_models_root(app: &AppHandle) -> Result<PathBuf, String> {
+    let dir = user_models_root(app).ok_or_else(|| tr(Key::PathNoAppData).to_string())?;
+    std::fs::create_dir_all(&dir).map_err(|e| {
+        tf(
+            Key::PathCreateFailed,
+            &[&dir.display().to_string(), &e.to_string()],
+        )
+    })?;
+    Ok(dir)
+}
+
+pub fn validate_models_dir(app: &AppHandle, raw: &str) -> Result<PathBuf, String> {
+    let resource = app.path().resource_dir().ok();
+    validate_models_dir_within(raw, resource.as_deref())
+}
+
+fn validate_models_dir_within(raw: &str, resource: Option<&Path>) -> Result<PathBuf, String> {
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return Err(tr(Key::PathCustomDirEmpty).to_string());
+    }
+
+    let path = PathBuf::from(trimmed);
+    if !path.is_absolute() {
+        return Err(tf(Key::PathCustomDirRelative, &[trimmed]));
+    }
+    let path = simplify(path);
+
+    if let Some(resource) = resource {
+        let resource = std::fs::canonicalize(resource).unwrap_or_else(|_| resource.to_path_buf());
+        let candidate = std::fs::canonicalize(&path).unwrap_or_else(|_| path.clone());
+        if candidate.starts_with(&resource) {
+            return Err(tf(
+                Key::PathCustomDirInBundle,
+                &[&path.display().to_string()],
+            ));
+        }
+    }
+
+    std::fs::create_dir_all(&path).map_err(|e| {
+        tf(
+            Key::PathCreateFailed,
+            &[&path.display().to_string(), &e.to_string()],
+        )
+    })?;
+
+    let probe = path.join(".audioscript-write-test");
+    let probe_result = std::fs::write(&probe, b"probe").and_then(|_| std::fs::remove_file(&probe));
+    if let Err(e) = probe_result {
+        return Err(tf(
+            Key::PathCustomDirNotWritable,
+            &[&path.display().to_string(), &e.to_string()],
+        ));
+    }
+
+    Ok(path)
+}
+
+pub fn search_roots(app: &AppHandle) -> ModelSearchRoots {
+    let env = std::env::var(ENV_MODEL_DIR)
+        .ok()
+        .map(PathBuf::from)
+        .filter(|p| p.is_dir());
+
+    let bundled = app
+        .path()
+        .resource_dir()
+        .ok()
+        .map(|dir| simplify(dir.join("models")))
+        .filter(|p| p.is_dir());
+
+    let dev = {
+        let p = Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/models");
+        p.is_dir().then_some(p)
+    };
+
+    let mut user_roots = user_models_roots(app);
+    let user = user_roots.first().cloned();
+    let user_fallback = user_roots.drain(1..).next();
+
+    ModelSearchRoots {
+        env,
+        bundled,
+        dev,
+        user,
+        user_fallback,
+    }
+}
+
+pub fn vad_model_path(roots: &ModelSearchRoots) -> Option<PathBuf> {
+    for root in [
+        roots.env.as_ref(),
+        roots.dev.as_ref(),
+        roots.bundled.as_ref(),
+    ] {
+        if let Some(root) = root {
+            let path = root.join(VAD_MODEL_FILE);
+            if path.is_file() {
+                return Some(simplify(path));
+            }
+        }
+    }
+    None
+}
+
+fn add_candidate(
+    candidates: &mut Vec<(PathBuf, ResolutionVia)>,
+    root: &Option<PathBuf>,
+    rel: &str,
+    via: ResolutionVia,
+) {
+    if let Some(root) = root {
+        candidates.push((root.join(rel), via));
+    }
+}
+
+fn first_existing(
+    candidates: Vec<(PathBuf, ResolutionVia)>,
+    what: &str,
+    remedy: &str,
+) -> Result<ResolvedModelDir, String> {
+    let mut tried = Vec::new();
+    for (path, via) in candidates {
+        if path.is_dir() {
+            return Ok(resolved(path, via));
+        }
+        tried.push(tf(Key::PathNotExist, &[&path.display().to_string()]));
+    }
+
+    if tried.is_empty() {
+        tried.push(tr(Key::PathNoCandidate).to_string());
+    }
+
+    Err(tf(
+        Key::PathNotFound,
+        &[what, &tried.join("\n  - "), remedy],
+    ))
+}
+
+fn locate(
+    roots: &ModelSearchRoots,
+    bundled: bool,
+    rel: &str,
+    what: String,
+    remedy: String,
+) -> Result<ResolvedModelDir, String> {
+    let mut candidates = Vec::new();
+    add_candidate(&mut candidates, &roots.env, rel, ResolutionVia::EnvOverride);
+    if bundled {
+        add_candidate(
+            &mut candidates,
+            &roots.bundled,
+            rel,
+            ResolutionVia::BundledResource,
+        );
+        add_candidate(
+            &mut candidates,
+            &roots.dev,
+            rel,
+            ResolutionVia::DevSourceTree,
+        );
+    } else {
+        add_candidate(&mut candidates, &roots.user, rel, ResolutionVia::UserData);
+        add_candidate(
+            &mut candidates,
+            &roots.user_fallback,
+            rel,
+            ResolutionVia::UserData,
+        );
+    }
+    first_existing(candidates, &what, &remedy)
+}
+
+pub fn locate_asr(
+    roots: &ModelSearchRoots,
+    tier: AsrModelTier,
+) -> Result<ResolvedModelDir, String> {
+    let entry = catalog::asr_entry(tier);
+    let bundled = matches!(tier, AsrModelTier::Builtin);
+    let remedy = if bundled {
+        tf(Key::PathBundledRemedyAsr, &[ENV_MODEL_DIR])
+    } else {
+        tf(Key::PathOptionalRemedyAsr, &[ENV_MODEL_DIR])
+    };
+    locate(
+        roots,
+        bundled,
+        entry.installed_dir(),
+        tf(Key::PathAsrLabel, &[&entry.localized_title()]),
+        remedy,
+    )
+}
+
+pub fn locate_mt_root(
+    roots: &ModelSearchRoots,
+    entry: &CatalogEntry,
+) -> Result<ResolvedModelDir, String> {
+    let remedy = if entry.bundled {
+        tf(Key::PathBundledRemedyMt, &[ENV_MODEL_DIR])
+    } else {
+        tf(Key::PathOptionalRemedyMt, &[ENV_MODEL_DIR])
+    };
+    locate(
+        roots,
+        entry.bundled,
+        entry.installed_dir(),
+        tf(Key::PathMtLabel, &[&entry.localized_title()]),
+        remedy,
+    )
+}
+
+pub(crate) fn file_names(dir: &Path) -> Result<Vec<String>, String> {
+    let entries = std::fs::read_dir(dir).map_err(|e| {
+        tf(
+            Key::PathReadFailed,
+            &[&dir.display().to_string(), &e.to_string()],
+        )
+    })?;
+    Ok(entries
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().is_file())
+        .map(|e| e.file_name().to_string_lossy().into_owned())
+        .collect())
+}
+
+fn matches_precision(name: &str, prefix: &str, precision: &str) -> bool {
+    if !(name.starts_with(prefix) && name.ends_with(".onnx")) {
+        return false;
+    }
+    match precision {
+        "int8" => name.contains(".int8."),
+        _ => !name.contains(".int8."),
+    }
+}
+
+pub fn missing_asr_files(dir: &Path, entry: &CatalogEntry) -> Result<Vec<String>, String> {
+    let req = entry
+        .required
+        .asr
+        .as_ref()
+        .ok_or_else(|| tf(Key::PathCatalogAsr, &[&entry.id]))?;
+
+    let mut missing = Vec::new();
+    match req.format {
+        AsrFormat::Transducer => {
+            let names = file_names(dir)?;
+            for (prefix, precision) in [
+                ("encoder", req.encoder.as_deref()),
+                ("decoder", req.decoder.as_deref()),
+                ("joiner", req.joiner.as_deref()),
+            ] {
+                let Some(precision) = precision else {
+                    missing.push(format!("{prefix}*.onnx（未配置）"));
+                    continue;
+                };
+                if !names
+                    .iter()
+                    .any(|n| matches_precision(n, prefix, precision))
+                {
+                    missing.push(format!("{prefix}*.onnx（{precision}）"));
+                }
+            }
+        }
+        AsrFormat::Qwen3Asr => {
+            for (label, value) in [
+                ("conv_frontend.onnx", req.conv_frontend.as_deref()),
+                ("encoder.onnx", req.encoder.as_deref()),
+                ("decoder.onnx", req.decoder.as_deref()),
+            ] {
+                match value {
+                    Some(file) if dir.join(file).is_file() => {}
+                    Some(file) => missing.push(file.to_owned()),
+                    None => missing.push(format!("{label}（未配置）")),
+                }
+            }
+            match req.tokenizer_dir.as_deref() {
+                Some(tok) if dir.join(tok).is_dir() => {}
+                Some(tok) => missing.push(format!("{tok}/")),
+                None => missing.push("tokenizer/（未配置）".into()),
+            }
+        }
+    }
+    for f in &req.files {
+        if !dir.join(f).is_file() {
+            missing.push(f.clone());
+        }
+    }
+
+    Ok(missing)
+}
+
+pub fn missing_mt_files(root: &Path, entry: &CatalogEntry) -> Result<Vec<String>, String> {
+    let req = entry
+        .required
+        .mt
+        .as_ref()
+        .ok_or_else(|| tf(Key::PathCatalogMt, &[&entry.id]))?;
+
+    if entry.mt_format() == Some(catalog::MtFormat::Hymt2) {
+        return Ok(crate::translate::hymt2::validate_install(root)
+            .err()
+            .into_iter()
+            .collect());
+    }
+
+    if matches!(
+        entry.mt_format(),
+        Some(catalog::MtFormat::Nllb | catalog::MtFormat::Lmt)
+    ) {
+        let missing = req
+            .files
+            .iter()
+            .filter(|f| !root.join(f.as_str()).is_file())
+            .cloned()
+            .collect();
+        return Ok(missing);
+    }
+
+    let directions = entry.direction_dirs();
+    if directions.is_empty() {
+        return Err(tf(Key::PathCatalogDirections, &[&entry.id]));
+    }
+
+    let mut missing = Vec::new();
+    for dir in directions {
+        for f in &req.files {
+            if !root.join(dir).join(f).is_file() {
+                missing.push(format!("{dir}/{f}"));
+            }
+        }
+    }
+
+    Ok(missing)
+}
+
+pub fn model_dir_is_complete(dir: &Path) -> Result<(), String> {
+    let entry = catalog::asr_entry(AsrModelTier::Builtin);
+    let missing = missing_asr_files(dir, entry)?;
+    if missing.is_empty() {
+        return Ok(());
+    }
+
+    let names = file_names(dir).unwrap_or_default();
+    Err(tf(
+        Key::PathDirMissing,
+        &[
+            &dir.display().to_string(),
+            &missing.join(", "),
+            &names.join(", "),
+        ],
+    ))
+}
+
+pub fn log_startup_selfcheck(app: &AppHandle) {
+    let prefs = crate::prefs::load(app);
+    let roots = search_roots(app);
+
+    match locate_asr(&roots, prefs.asr_model_tier) {
+        Ok(resolved) => {
+            tracing::info!(
+                tier = prefs.asr_model_tier.as_str(),
+                via = resolved.via.as_str(),
+                path = %resolved.path.display(),
+                "ASR 模型目录已解析"
+            );
+            match missing_asr_files(&resolved.path, catalog::asr_entry(prefs.asr_model_tier)) {
+                Ok(missing) if missing.is_empty() => {}
+                Ok(missing) => tracing::error!(
+                    "ASR 模型文件不完整，缺少：{}\n→ 打开「模型」页重新下载，或切换回内置模型",
+                    missing.join(", ")
+                ),
+                Err(e) => tracing::error!("{e}"),
+            }
+        }
+        Err(e) => tracing::error!("{e}"),
+    }
+
+    let mt_entry = catalog::mt_entry(prefs.mt_model_tier);
+    match locate_mt_root(&roots, mt_entry) {
+        Ok(resolved) => {
+            tracing::info!(
+                via = resolved.via.as_str(),
+                path = %resolved.path.display(),
+                model = %mt_entry.id,
+                "翻译模型目录已解析"
+            );
+            match missing_mt_files(&resolved.path, mt_entry) {
+                Ok(missing) if missing.is_empty() => {}
+                Ok(missing) => tracing::error!(
+                    "翻译模型文件不完整，缺少：{}\n→ {}",
+                    missing.join(", "),
+                    if mt_entry.bundled {
+                        "内置翻译模型缺失，请重新安装应用"
+                    } else {
+                        "请在「模型」页重新下载该模型"
+                    }
+                ),
+                Err(e) => tracing::error!("{e}"),
+            }
+        }
+        Err(e) => tracing::error!("{e}"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::MtModelTier;
+
+    fn temp_dir(files: &[&str]) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("paths-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&dir).unwrap();
+        for f in files {
+            std::fs::write(dir.join(f), b"x").unwrap();
+        }
+        dir
+    }
+
+    fn root_with(dir_name: &str, files: &[&str]) -> PathBuf {
+        let root = std::env::temp_dir().join(format!("paths-root-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(root.join(dir_name)).unwrap();
+        for f in files {
+            std::fs::write(root.join(dir_name).join(f), b"x").unwrap();
+        }
+        root
+    }
+
+    #[test]
+    fn complete_when_all_four_pieces_present() {
+        let dir = temp_dir(&[
+            "encoder-epoch-99-avg-1.int8.onnx",
+            "decoder-epoch-99-avg-1.onnx",
+            "joiner-epoch-99-avg-1.int8.onnx",
+            "tokens.txt",
+        ]);
+        assert!(model_dir_is_complete(&dir).is_ok());
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn incomplete_error_names_what_is_missing() {
+        let dir = temp_dir(&["encoder-epoch-99-avg-1.int8.onnx", "tokens.txt"]);
+        let msg = model_dir_is_complete(&dir).unwrap_err();
+        assert!(msg.contains("decoder"), "{msg}");
+        assert!(msg.contains("joiner"), "{msg}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn subdirectories_do_not_count_as_files() {
+        let dir = temp_dir(&["tokens.txt"]);
+        std::fs::create_dir_all(dir.join("encoder-x.onnx")).unwrap();
+        let msg = model_dir_is_complete(&dir).unwrap_err();
+        assert!(msg.contains("encoder"), "{msg}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn missing_dir_is_an_error_not_a_panic() {
+        assert!(model_dir_is_complete(Path::new("/nonexistent/models")).is_err());
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn verbatim_resource_paths_are_simplified() {
+        let r = resolved(
+            PathBuf::from(r"\\?\C:\Users\x\AppData\Local\AudioScript\models"),
+            ResolutionVia::BundledResource,
+        );
+        assert_eq!(
+            r.path,
+            Path::new(r"C:\Users\x\AppData\Local\AudioScript\models")
+        );
+    }
+
+    #[test]
+    fn builtin_prefers_env_over_bundled_and_dev() {
+        let env = root_with(
+            catalog::asr_entry(AsrModelTier::Builtin).installed_dir(),
+            &[],
+        );
+        let bundled = root_with(
+            catalog::asr_entry(AsrModelTier::Builtin).installed_dir(),
+            &[],
+        );
+        let dev = root_with(
+            catalog::asr_entry(AsrModelTier::Builtin).installed_dir(),
+            &[],
+        );
+        let roots = ModelSearchRoots {
+            env: Some(env.clone()),
+            bundled: Some(bundled),
+            dev: Some(dev),
+            user: None,
+            user_fallback: None,
+        };
+        let got = locate_asr(&roots, AsrModelTier::Builtin).unwrap();
+        assert_eq!(got.via, ResolutionVia::EnvOverride);
+        assert!(got.path.starts_with(&env));
+        std::fs::remove_dir_all(&env).ok();
+    }
+
+    #[test]
+    fn optional_tier_uses_user_data_and_never_bundled() {
+        let rel = catalog::asr_entry(AsrModelTier::HighAccuracy).installed_dir();
+        let user = root_with(rel, &[]);
+        let bundled = root_with(rel, &[]);
+        let roots = ModelSearchRoots {
+            env: None,
+            bundled: Some(bundled.clone()),
+            dev: None,
+            user: Some(user.clone()),
+            user_fallback: None,
+        };
+        let got = locate_asr(&roots, AsrModelTier::HighAccuracy).unwrap();
+        assert_eq!(got.via, ResolutionVia::UserData);
+        assert!(got.path.starts_with(&user));
+
+        let bundled_only = ModelSearchRoots {
+            env: None,
+            bundled: Some(bundled),
+            dev: None,
+            user: None,
+            user_fallback: None,
+        };
+        assert!(locate_asr(&bundled_only, AsrModelTier::HighAccuracy).is_err());
+        std::fs::remove_dir_all(&user).ok();
+    }
+
+    #[test]
+    fn optional_tier_falls_back_to_default_user_root() {
+        let rel = catalog::asr_entry(AsrModelTier::HighAccuracy).installed_dir();
+        let legacy = root_with(rel, &[]);
+        let missing = std::env::temp_dir().join(format!("paths-none-{}", uuid::Uuid::new_v4()));
+        let roots = ModelSearchRoots {
+            env: None,
+            bundled: None,
+            dev: None,
+            user: Some(missing),
+            user_fallback: Some(legacy.clone()),
+        };
+
+        let got = locate_asr(&roots, AsrModelTier::HighAccuracy).unwrap();
+        assert_eq!(got.via, ResolutionVia::UserData);
+        assert!(got.path.starts_with(&legacy));
+
+        std::fs::remove_dir_all(&legacy).ok();
+    }
+
+    #[test]
+    fn primary_user_root_wins_over_fallback() {
+        let rel = catalog::asr_entry(AsrModelTier::HighAccuracy).installed_dir();
+        let primary = root_with(rel, &[]);
+        let legacy = root_with(rel, &[]);
+        let roots = ModelSearchRoots {
+            env: None,
+            bundled: None,
+            dev: None,
+            user: Some(primary.clone()),
+            user_fallback: Some(legacy.clone()),
+        };
+
+        let got = locate_asr(&roots, AsrModelTier::HighAccuracy).unwrap();
+        assert!(got.path.starts_with(&primary));
+
+        std::fs::remove_dir_all(&primary).ok();
+        std::fs::remove_dir_all(&legacy).ok();
+    }
+
+    #[test]
+    fn first_existing_incomplete_dir_wins() {
+        let rel = catalog::asr_entry(AsrModelTier::HighAccuracy).installed_dir();
+        let user = root_with(rel, &[]);
+        let roots = ModelSearchRoots {
+            env: None,
+            bundled: None,
+            dev: None,
+            user: Some(user.clone()),
+            user_fallback: None,
+        };
+        let got = locate_asr(&roots, AsrModelTier::HighAccuracy).unwrap();
+        assert!(got.path.starts_with(&user));
+        let missing =
+            missing_asr_files(&got.path, catalog::asr_entry(AsrModelTier::HighAccuracy)).unwrap();
+        assert!(
+            missing.iter().any(|m| m.starts_with("encoder")),
+            "{missing:?}"
+        );
+        std::fs::remove_dir_all(&user).ok();
+    }
+
+    #[test]
+    fn asr_precision_is_enforced() {
+        let dir = temp_dir(&[
+            "encoder-x.onnx",
+            "decoder-x.onnx",
+            "joiner-x.int8.onnx",
+            "tokens.txt",
+        ]);
+        let missing = missing_asr_files(&dir, catalog::asr_entry(AsrModelTier::Builtin)).unwrap();
+        assert!(missing.iter().any(|m| m.contains("encoder")), "{missing:?}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn qwen3_layout_uses_its_own_required_files() {
+        let dir = temp_dir(&[
+            "conv_frontend.onnx",
+            "encoder.int8.onnx",
+            "decoder.int8.onnx",
+        ]);
+        std::fs::create_dir_all(dir.join("tokenizer")).unwrap();
+        for f in ["merges.txt", "tokenizer_config.json", "vocab.json"] {
+            std::fs::write(dir.join("tokenizer").join(f), b"x").unwrap();
+        }
+
+        let entry = catalog::entry("asr-qwen3").unwrap();
+        assert!(missing_asr_files(&dir, entry).unwrap().is_empty());
+
+        std::fs::remove_file(dir.join("decoder.int8.onnx")).unwrap();
+        let missing = missing_asr_files(&dir, entry).unwrap();
+        assert!(missing.iter().any(|m| m.contains("decoder")), "{missing:?}");
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn mt_missing_files_name_direction_and_file() {
+        let entry = catalog::mt_entry(MtModelTier::Base);
+        let root = std::env::temp_dir().join(format!("paths-mt-{}", uuid::Uuid::new_v4()));
+        let missing = missing_mt_files(&root, entry).unwrap();
+        assert!(
+            missing.iter().any(|m| m.contains("model.bin")),
+            "{missing:?}"
+        );
+        assert!(
+            missing.iter().all(|m| m.contains('/')),
+            "必须带上方向目录：{missing:?}"
+        );
+        std::fs::remove_dir_all(&root).ok();
+    }
+
+    #[test]
+    fn user_roots_put_custom_first_and_keep_default_as_fallback() {
+        let custom = PathBuf::from("/custom");
+        let default = PathBuf::from("/default");
+        assert_eq!(
+            combine_user_roots(Some(custom.clone()), Some(default.clone())),
+            vec![custom, default]
+        );
+        assert_eq!(
+            combine_user_roots(None, Some(PathBuf::from("/default"))),
+            vec![PathBuf::from("/default")]
+        );
+    }
+
+    #[test]
+    fn user_roots_deduplicate_identical_custom_and_default() {
+        let same = PathBuf::from("/models");
+        assert_eq!(
+            combine_user_roots(Some(same.clone()), Some(same.clone())),
+            vec![same]
+        );
+    }
+
+    #[test]
+    fn custom_dir_rejects_blank_and_relative_paths() {
+        assert!(validate_models_dir_within("   ", None).is_err());
+        assert!(validate_models_dir_within("relative/models", None).is_err());
+    }
+
+    #[test]
+    fn custom_dir_rejects_app_bundle_subfolder() {
+        let bundle = std::env::temp_dir().join(format!("paths-bundle-{}", uuid::Uuid::new_v4()));
+        let inside = bundle.join("models");
+        std::fs::create_dir_all(&inside).unwrap();
+        assert!(
+            validate_models_dir_within(&inside.display().to_string(), Some(&bundle)).is_err(),
+            "应用安装目录内不能存模型"
+        );
+        std::fs::remove_dir_all(&bundle).ok();
+    }
+
+    #[test]
+    fn custom_dir_is_created_and_probed() {
+        let root = std::env::temp_dir().join(format!("paths-custom-{}", uuid::Uuid::new_v4()));
+        let path = root.join("nested/models");
+        let got = validate_models_dir_within(&path.display().to_string(), None).unwrap();
+        assert!(got.is_dir());
+        assert!(
+            !got.join(".audioscript-write-test").exists(),
+            "写入探测文件必须被清理"
+        );
+        std::fs::remove_dir_all(&root).ok();
+    }
+
+    #[test]
+    fn mt_base_locates_bundled_mt_dir() {
+        let entry = catalog::mt_entry(MtModelTier::Base);
+        let rel = entry.installed_dir();
+        let bundled = root_with(rel, &[]);
+        let roots = ModelSearchRoots {
+            env: None,
+            bundled: Some(bundled.clone()),
+            dev: None,
+            user: None,
+            user_fallback: None,
+        };
+        let got = locate_mt_root(&roots, entry).unwrap();
+        assert_eq!(got.via, ResolutionVia::BundledResource);
+        assert!(got.path.ends_with(rel));
+        std::fs::remove_dir_all(&bundled).ok();
+    }
+
+    #[test]
+    fn single_dir_mt_checks_files_at_root() {
+        let entry = catalog::mt_entry(MtModelTier::Multilingual);
+        let root = std::env::temp_dir().join(format!("paths-mt-multi-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(root.join("model.bin"), b"x").unwrap();
+        let missing = missing_mt_files(&root, entry).unwrap();
+        assert!(!missing.iter().any(|m| m == "model.bin"), "{missing:?}");
+        assert!(missing.iter().any(|m| m == "tokenizer.json"), "{missing:?}");
+        std::fs::remove_dir_all(&root).ok();
+    }
+}

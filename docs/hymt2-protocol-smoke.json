@@ -1,0 +1,107 @@
+{
+  "scope": "silent text-to-MT protocol only; not overlay or audio E2E",
+  "events": [
+    {
+      "ready": {
+        "type": "ready",
+        "protocol": 1,
+        "mlx": "0.32.4",
+        "mlx_lm": "0.32.2"
+      },
+      "elapsedMs": 873.38
+    },
+    {
+      "request": {
+        "op": "translate",
+        "id": 1,
+        "source": "en",
+        "target": "zh",
+        "text": "Hello. The meeting will begin in ten minutes."
+      },
+      "response": {
+        "type": "translation",
+        "id": 1,
+        "text": "您好。会议将在十分钟后开始。"
+      },
+      "elapsedMs": 119.0
+    },
+    {
+      "request": {
+        "op": "translate",
+        "id": 2,
+        "source": "ru",
+        "target": "zh",
+        "text": "Здравствуйте. Встреча начнётся через десять минут."
+      },
+      "response": {
+        "type": "translation",
+        "id": 2,
+        "text": "您好。会议将在10分钟后开始。"
+      },
+      "elapsedMs": 123.8
+    },
+    {
+      "request": {
+        "op": "translate",
+        "id": 3,
+        "source": "en",
+        "target": "zh",
+        "text": "The system translates locally without sending audio to a server."
+      },
+      "response": {
+        "type": "translation",
+        "id": 3,
+        "text": "该系统在本地进行翻译，无需将音频发送到服务器。"
+      },
+      "elapsedMs": 155.49
+    },
+    {
+      "request": {
+        "op": "translate",
+        "id": 4,
+        "source": "fr",
+        "target": "zh",
+        "text": "Bonjour"
+      },
+      "response": {
+        "type": "error",
+        "id": 4,
+        "error": "supported directions: en/ru → zh"
+      },
+      "elapsedMs": 0.07
+    },
+    {
+      "request": {
+        "op": "translate",
+        "id": 5,
+        "source": "en",
+        "target": "zh",
+        "text": "Thank you."
+      },
+      "response": {
+        "type": "translation",
+        "id": 5,
+        "text": "谢谢。"
+      },
+      "elapsedMs": 67.78
+    },
+    {
+      "request": {
+        "op": "translate",
+        "id": 5,
+        "source": "en",
+        "target": "zh",
+        "text": "Thank you."
+      },
+      "response": {
+        "type": "translation",
+        "id": 5,
+        "text": "谢谢。"
+      },
+      "elapsedMs": 69.08
+    },
+    {
+      "shutdownExitCode": 0
+    }
+  ]
+}

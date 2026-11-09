@@ -1,0 +1,172 @@
+name: Windows HYMT2 validation
+
+on:
+  push:
+    branches:
+      - windows-hymt2
+      - 'windows-hymt2/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-hymt2-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-x64:
+    name: Test and package Windows x64
+    runs-on: windows-latest
+    timeout-minutes: 120
+    env:
+      RUSTFLAGS: -C target-feature=+crt-static
+      CARGO_TERM_COLOR: never
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Record runner evidence
+        run: |
+          New-Item -ItemType Directory -Force evidence | Out-Null
+          @{
+            commit = '${{ github.sha }}'
+            ref = '${{ github.ref }}'
+            run = '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+            os = [System.Environment]::OSVersion.VersionString
+            architecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
+            runnerImage = $env:ImageOS
+            runnerImageVersion = $env:ImageVersion
+            rustflags = $env:RUSTFLAGS
+            gpuValidation = 'NOT RUN: hosted runner build does not validate CUDA inference'
+          } | ConvertTo-Json | Set-Content evidence/runner.json
+          if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString() -ne 'X64') {
+            throw '需要 Windows x64 构建环境'
+          }
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Cache Rust target
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          key: windows-hymt2-crt-static
+
+      - name: Verify sherpa native cache
+        run: |
+          $cache = 'src-tauri/target/sherpa-onnx-prebuilt'
+          if ((Test-Path $cache) -and -not (Get-ChildItem $cache -Recurse -Filter sherpa-onnx-c-api.lib)) {
+            Remove-Item $cache -Recurse -Force
+          }
+
+      - name: Cache base models
+        uses: actions/cache@v4
+        with:
+          path: |
+            src-tauri/assets/models
+            .cache/mt
+          key: windows-hymt2-base-models-${{ hashFiles('scripts/fetch-model.mjs', 'scripts/fetch-mt-model.mjs', 'src-tauri/assets/model-catalog.json') }}
+
+      - name: Cache typeshare CLI
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/typeshare.exe
+          key: typeshare-1.13.4-Windows-X64
+
+      - name: Install typeshare CLI
+        shell: bash
+        run: typeshare --version 2>/dev/null | grep -q 1.13.4 || cargo install typeshare-cli --version 1.13.4 --locked
+
+      - name: Record toolchain versions
+        run: |
+          node --version | Out-File evidence/toolchains.txt
+          pnpm --version | Out-File evidence/toolchains.txt -Append
+          python --version | Out-File evidence/toolchains.txt -Append
+          rustc -Vv | Out-File evidence/toolchains.txt -Append
+          cargo --version | Out-File evidence/toolchains.txt -Append
+          typeshare --version | Out-File evidence/toolchains.txt -Append
+
+      - name: Install frontend dependencies and base ASR model
+        run: pnpm install --frozen-lockfile
+
+      - name: Fetch bundled base translation models
+        run: pnpm fetch:mt
+
+      - name: Verify model catalog metadata
+        run: pnpm verify:models
+
+      - name: Generate frontend types
+        run: pnpm gen:types
+
+      - name: Typecheck frontend
+        run: pnpm typecheck
+
+      - name: Test HYMT2 worker protocol
+        run: |
+          if (-not (Test-Path scripts/test_windows_hymt2_worker.py)) { throw '缺少 HYMT2 worker 测试文件' }
+          python -m unittest discover -s scripts -p 'test_windows_hymt2_worker.py' 2>&1 | Tee-Object evidence/python-tests.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build generated frontend
+        run: pnpm build
+
+      - name: Run native Rust library tests
+        run: |
+          cargo test --manifest-path src-tauri/Cargo.toml --locked --lib 2>&1 | Tee-Object evidence/rust-tests.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build unsigned Windows installers
+        run: |
+          pnpm tauri build --bundles nsis,msi 2>&1 | Tee-Object evidence/build.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Hash Windows installers
+        run: |
+          $nsis = @(Get-ChildItem src-tauri/target/release/bundle/nsis -Filter *.exe)
+          $msi = @(Get-ChildItem src-tauri/target/release/bundle/msi -Filter *.msi)
+          if ($nsis.Count -eq 0 -or $msi.Count -eq 0) { throw 'NSIS 或 MSI 安装包缺失' }
+          @($nsis + $msi) | ForEach-Object {
+            $hash = Get-FileHash $_.FullName -Algorithm SHA256
+            "$($hash.Hash.ToLowerInvariant())  $($_.Name)"
+          } | Set-Content evidence/SHA256SUMS.txt
+
+      - name: Upload Windows installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: AudioScript-HYMT2-Windows-x64-${{ github.sha }}
+          path: |
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/msi/*.msi
+            evidence/SHA256SUMS.txt
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
+      - name: Upload build and test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AudioScript-HYMT2-Windows-evidence-${{ github.run_id }}
+          path: evidence/
+          if-no-files-found: warn
+          retention-days: 14

@@ -71,6 +71,7 @@ jobs:
         with:
           workspaces: src-tauri
           key: windows-hymt2-crt-static
+          cache-on-failure: true
 
       - name: Verify sherpa native cache
         run: |
@@ -80,7 +81,8 @@ jobs:
           }
 
       - name: Cache base models
-        uses: actions/cache@v4
+        id: base-model-cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             src-tauri/assets/models
@@ -88,7 +90,8 @@ jobs:
           key: windows-hymt2-base-models-${{ hashFiles('scripts/fetch-model.mjs', 'scripts/fetch-mt-model.mjs', 'src-tauri/assets/model-catalog.json') }}
 
       - name: Cache typeshare CLI
-        uses: actions/cache@v4
+        id: typeshare-cache
+        uses: actions/cache/restore@v4
         with:
           path: ~/.cargo/bin/typeshare.exe
           key: typeshare-1.13.4-Windows-X64
@@ -96,6 +99,13 @@ jobs:
       - name: Install typeshare CLI
         shell: bash
         run: typeshare --version 2>/dev/null | grep -q 1.13.4 || cargo install typeshare-cli --version 1.13.4 --locked
+
+      - name: Save typeshare CLI cache
+        if: steps.typeshare-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cargo/bin/typeshare.exe
+          key: typeshare-1.13.4-Windows-X64
 
       - name: Record toolchain versions
         run: |
@@ -111,6 +121,15 @@ jobs:
 
       - name: Fetch bundled base translation models
         run: pnpm fetch:mt
+
+      - name: Save base model cache
+        if: steps.base-model-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            src-tauri/assets/models
+            .cache/mt
+          key: windows-hymt2-base-models-${{ hashFiles('scripts/fetch-model.mjs', 'scripts/fetch-mt-model.mjs', 'src-tauri/assets/model-catalog.json') }}
 
       - name: Verify model catalog metadata
         run: pnpm verify:models

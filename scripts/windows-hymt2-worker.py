@@ -75,6 +75,8 @@ class Translator:
         runtime_path = directory / 'runtime.json'
         runtime = json.loads(runtime_path.read_text(encoding='utf-8')) if runtime_path.exists() else {}
         self.device, dtype = select_device(torch, runtime.get('allow_cpu') is True)
+        if self.device == 'cpu':
+            torch.set_num_threads(min(4, torch.get_num_threads()))
         self.torch = torch
         self.dtype = str(dtype).removeprefix('torch.')
         self.tokenizer = AutoTokenizer.from_pretrained(directory, local_files_only=True, trust_remote_code=False)
@@ -154,7 +156,8 @@ def main():
         warmup_ms = round((time.monotonic() - warmup_started) * 1000)
         emit(output, {'type': 'ready', 'protocol': 1, 'backend': 'transformers',
                       'model': 'Hy-MT2-1.8B', 'device': translator.device, 'dtype': translator.dtype,
-                      'torch': translator.torch.__version__, 'warmup_ms': warmup_ms,
+                      'torch': translator.torch.__version__, 'threads': translator.torch.get_num_threads(),
+                      'warmup_ms': warmup_ms,
                       'startup_ms': round((time.monotonic() - started) * 1000),
                       'warning': 'CPU 模式不保证实时性能' if translator.device == 'cpu' else None})
         serve(translator, sys.stdin, output)

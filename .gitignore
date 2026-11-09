@@ -36,5 +36,5 @@ pnpm-debug.log*
 .venv*/
 __pycache__/
 *.pyc
-models/
+/models/
 evidence-local/

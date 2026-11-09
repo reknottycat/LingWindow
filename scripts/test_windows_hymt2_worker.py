@@ -101,6 +101,34 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout)['type'], 'error')
         self.assertEqual(result.stderr, '')
 
+    def test_ready_after_warmup(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch, Mock
+        translator = SimpleNamespace(device='cpu', dtype='bfloat16',
+                                     torch=SimpleNamespace(__version__='test', get_num_threads=lambda: 4),
+                                     translate=Mock(return_value='你好。'))
+        out = io.StringIO()
+        with patch.object(worker, 'Translator', return_value=translator), \
+             patch.object(worker.sys, 'argv', ['-c', '中文 模型']), \
+             patch.object(worker.sys, 'stdin', io.StringIO('{"op":"shutdown"}\n')), \
+             patch.object(worker.sys, 'stdout', out):
+            self.assertEqual(worker.main(), 0)
+        translator.translate.assert_called_once_with('en', 'zh', 'Hello.')
+        ready = json.loads(out.getvalue())
+        self.assertEqual(ready['type'], 'ready')
+        self.assertEqual(ready['threads'], 4)
+
+    def test_failed_warmup_never_ready(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch, Mock
+        translator = SimpleNamespace(translate=Mock(side_effect=RuntimeError('预热失败')))
+        out = io.StringIO()
+        with patch.object(worker, 'Translator', return_value=translator), \
+             patch.object(worker.sys, 'argv', ['-c', '中文 模型']), \
+             patch.object(worker.sys, 'stdout', out):
+            self.assertEqual(worker.main(), 1)
+        self.assertEqual(json.loads(out.getvalue())['type'], 'error')
+
     def test_manifest(self):
         self.assertEqual(setup.MANIFEST['model.safetensors']['size'], 4077072784)
         self.assertTrue(all(len(item['sha256']) == 64 for item in setup.MANIFEST.values()))

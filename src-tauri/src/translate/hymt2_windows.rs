@@ -335,4 +335,75 @@ mod tests {
         );
         terminate_worker();
     }
+    #[test]
+    fn venv_redirector_unicode_and_real_interpreter_cleanup() {
+        use windows_sys::Win32::System::Threading::{OpenProcess, PROCESS_SYNCHRONIZE};
+
+        struct Venv(std::path::PathBuf);
+        impl Drop for Venv {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let python = std::env::var_os("PYTHON").unwrap_or_else(|| "python".into());
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let venv = Venv(
+            std::env::temp_dir().join(format!("hymt2 venv 中文 {} {nonce}", std::process::id())),
+        );
+        let created = Command::new(python)
+            .args(["-I", "-m", "venv", "--without-pip", "--copies"])
+            .arg(&venv.0)
+            .creation_flags(CREATE_NO_WINDOW)
+            .status()
+            .expect("必须能够创建 Windows 原生 Python 虚拟环境");
+        assert!(created.success(), "虚拟环境创建必须成功");
+        let script = "import sys,json,os\nprint(json.dumps({'type':'ready','pid':os.getpid(),'prefix':sys.prefix}),flush=True)\nfor line in sys.stdin:\n r=json.loads(line); print(json.dumps(r,ensure_ascii=False),flush=True)";
+        for explicit_stop in [false, true] {
+            let mut process =
+                Process::spawn(&venv.0.join("Scripts/python.exe"), &venv.0, script).unwrap();
+            let ready = process.read_response(Duration::from_secs(20)).unwrap();
+            assert_eq!(
+                std::fs::canonicalize(ready["prefix"].as_str().unwrap()).unwrap(),
+                std::fs::canonicalize(&venv.0).unwrap(),
+                "测试必须运行在刚创建的虚拟环境中"
+            );
+            let worker_pid = u32::try_from(ready["pid"].as_u64().unwrap()).unwrap();
+            // Retain the actual interpreter handle before stopping the redirector;
+            // checking only the redirector's PID cannot detect a leaked interpreter.
+            let raw = unsafe { OpenProcess(PROCESS_SYNCHRONIZE, 0, worker_pid) };
+            assert!(!raw.is_null(), "必须能够保留真实解释器进程句柄");
+            let interpreter = unsafe { OwnedHandle::from_raw_handle(raw) };
+            let launcher = process.handle.as_ref().unwrap().clone();
+            eprintln!(
+                "虚拟环境启动器 PID={}，实际解释器 PID={worker_pid}，显式停止={explicit_stop}",
+                process.child.id()
+            );
+            for id in 1..=10 {
+                let request = serde_json::json!({"id":id,"text":"Привет 🌏\n世界"});
+                process.write_request(&request).unwrap();
+                assert_eq!(
+                    process.read_response(Duration::from_secs(10)).unwrap(),
+                    request
+                );
+            }
+            if explicit_stop {
+                terminate_worker();
+            }
+            drop(process);
+            assert_eq!(
+                unsafe { WaitForSingleObject(launcher.as_raw_handle() as HANDLE, 5000) },
+                WAIT_OBJECT_0,
+                "虚拟环境启动器必须退出"
+            );
+            assert_eq!(
+                unsafe { WaitForSingleObject(interpreter.as_raw_handle() as HANDLE, 5000) },
+                WAIT_OBJECT_0,
+                "真实解释器不可遗留在后台占用 GPU"
+            );
+        }
+    }
 }

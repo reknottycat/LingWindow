@@ -22,6 +22,7 @@ jobs:
     env:
       RUSTFLAGS: -C target-feature=+crt-static
       CARGO_TERM_COLOR: never
+      PYTHONUTF8: '1'
     defaults:
       run:
         shell: pwsh
@@ -143,7 +144,7 @@ jobs:
       - name: Test HYMT2 worker protocol
         run: |
           if (-not (Test-Path scripts/test_windows_hymt2_worker.py)) { throw '缺少 HYMT2 worker 测试文件' }
-          python -m unittest discover -s scripts -p 'test_windows_hymt2_worker.py' 2>&1 | Tee-Object evidence/python-tests.txt
+          python -X utf8 -m unittest discover -s scripts -p 'test_windows_hymt2_worker.py' 2>&1 | Tee-Object evidence/python-tests.txt
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Build generated frontend

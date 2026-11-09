@@ -62,7 +62,7 @@ def download_large(url, partial, total):
         offset = 0
     with partial.open('ab') as output:
         while offset < total:
-            end = min(total, offset + 64 * 1024 * 1024) - 1
+            end = min(total, offset + 8 * 1024 * 1024) - 1
             for attempt in range(3):
                 try:
                     request = urllib.request.Request(url, headers={'Range': f'bytes={offset}-{end}'})
@@ -128,8 +128,10 @@ def main():
     if not python.exists():
         venv.EnvBuilder(with_pip=True).create(envdir)
     subprocess.run([str(python), '-m', 'pip', 'install', '--upgrade', 'pip'], check=True)
-    index = 'https://download.pytorch.org/whl/' + ('cpu' if args.cpu else 'cu128')
-    subprocess.run([str(python), '-m', 'pip', 'install', 'torch==2.11.0', '--index-url', index], check=True)
+    variant = 'cpu' if args.cpu else 'cu128'
+    index = 'https://download.pytorch.org/whl/' + variant
+    subprocess.run([str(python), '-m', 'pip', 'install', 'torch==2.11.0+' + variant,
+                    '--index-url', index], check=True)
     requirements = Path(__file__).with_name('requirements-windows-hymt2.txt')
     subprocess.run([str(python), '-m', 'pip', 'install', '-r', str(requirements)], check=True)
     check = ('import torch; from transformers.models.auto.configuration_auto import CONFIG_MAPPING; '

@@ -690,7 +690,17 @@ impl Preferences {
             self.mt_model_tier,
             &self.source_lang,
         ) {
-            self.source_lang = d.source_lang;
+            self.source_lang = if source_lang_allowed(
+                self.translate_engine,
+                self.asr_engine,
+                self.asr_model_tier,
+                self.mt_model_tier,
+                &d.source_lang,
+            ) {
+                d.source_lang
+            } else {
+                "en".into()
+            };
         }
         let target_lang = effective_target_lang(
             self.translate_engine,
@@ -927,6 +937,19 @@ mod tests {
     }
 
     #[test]
+    fn default_preferences_are_valid_and_stable() {
+        let p = Preferences::default();
+        assert!(!p.analytics_enabled, "默认应关闭统计");
+        assert_eq!(p.clone().sanitized(), p, "默认偏好必须已满足模型约束");
+        if cfg!(windows) {
+            assert_eq!(p.source_lang, "ru");
+            assert_eq!(p.target_lang, "zh");
+            assert_eq!(p.asr_model_tier, AsrModelTier::Nemotron);
+            assert_eq!(p.mt_model_tier, MtModelTier::Hymt2);
+        }
+    }
+
+    #[test]
     fn sanitize_falls_back_per_field_not_wholesale() {
         let p = Preferences {
             audio_source: "speaker".into(),
@@ -951,7 +974,49 @@ mod tests {
             ..Default::default()
         }
         .sanitized();
-        assert_eq!(p.source_lang, "en");
+        assert_eq!(p.source_lang, Preferences::default().source_lang);
+    }
+
+    #[test]
+    fn sanitize_fallback_matches_selected_models_and_engine() {
+        for asr_model_tier in [
+            AsrModelTier::Builtin,
+            AsrModelTier::XAsr,
+            AsrModelTier::Nemotron,
+            AsrModelTier::Qwen3,
+        ] {
+            for translate_engine in [
+                TranslateEngine::Off,
+                TranslateEngine::LocalNmt,
+                TranslateEngine::MacTranslation,
+            ] {
+                for mt_model_tier in [
+                    MtModelTier::Base,
+                    MtModelTier::Hymt2,
+                    MtModelTier::Multilingual,
+                ] {
+                    let p = Preferences {
+                        asr_model_tier,
+                        translate_engine,
+                        mt_model_tier,
+                        source_lang: "auto".into(),
+                        ..Default::default()
+                    }
+                    .sanitized();
+                    assert!(
+                        source_lang_allowed(
+                            p.translate_engine,
+                            p.asr_engine,
+                            p.asr_model_tier,
+                            p.mt_model_tier,
+                            &p.source_lang
+                        ),
+                        "回落语言必须匹配所选引擎和模型：{p:?}"
+                    );
+                    assert_eq!(p.clone().sanitized(), p, "清理偏好应保持稳定");
+                }
+            }
+        }
     }
 
     #[test]
@@ -1004,6 +1069,7 @@ mod tests {
 
         let streaming = Preferences {
             translate_engine: TranslateEngine::MacTranslation,
+            asr_model_tier: AsrModelTier::Builtin,
             source_lang: "ja".into(),
             target_lang: "zh".into(),
             ..Default::default()
@@ -1029,7 +1095,17 @@ mod tests {
             ..Default::default()
         }
         .sanitized();
-        assert_eq!(local.source_lang, "en");
+        assert!(
+            source_lang_allowed(
+                local.translate_engine,
+                local.asr_engine,
+                local.asr_model_tier,
+                local.mt_model_tier,
+                &local.source_lang
+            ),
+            "回落语言必须匹配所选模型"
+        );
+        assert_ne!(local.source_lang, "ja");
 
         let multilingual = Preferences {
             translate_engine: TranslateEngine::LocalNmt,
@@ -1286,6 +1362,7 @@ mod tests {
 
         let local = Preferences {
             translate_engine: TranslateEngine::LocalNmt,
+            mt_model_tier: MtModelTier::Base,
             source_lang: "en".into(),
             target_lang: "ja".into(),
             ..Default::default()
@@ -1321,7 +1398,11 @@ mod tests {
             ..Default::default()
         }
         .sanitized();
-        assert_eq!(lmt_source.source_lang, "en", "LMT 不支持的语言必须回退");
+        assert_eq!(
+            lmt_source.source_lang,
+            Preferences::default().source_lang,
+            "LMT 不支持的语言必须回退"
+        );
 
         let lmt_target = Preferences {
             translate_engine: TranslateEngine::LocalNmt,
@@ -1356,6 +1437,7 @@ mod tests {
         assert!(auto.validate().is_err(), "auto 必须在补丁层拒绝");
 
         let streaming = Preferences {
+            asr_model_tier: AsrModelTier::Builtin,
             source_lang: "fr".into(),
             ..Default::default()
         }

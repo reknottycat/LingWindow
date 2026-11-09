@@ -3,7 +3,8 @@ import type { Messages } from './zh-CN'
 export const en: Messages = {
   'models.modelMtHymt2Title': 'HY-MT2 1.8B · Local',
   'models.hymt2Directions': 'English / Russian → Chinese',
-  'models.manualInstall': 'Run the included Windows setup script for CUDA, or install the Mac MLX runtime; model download is separate',
+  'models.manualInstall':
+    'Run the included Windows setup script for CUDA, or install the Mac MLX runtime; model download is separate',
   'models.statusManual': 'Local setup required',
   'models.previewTitle': 'Silent text test',
   'models.previewBody':

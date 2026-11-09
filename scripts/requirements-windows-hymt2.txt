@@ -1,2 +1,3 @@
+# setup-windows-hymt2.py installs torch==2.11.0 from the official cu128 (or explicit cpu) index.
 transformers==5.6.0
 safetensors>=0.4.3,<1

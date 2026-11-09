@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import time
 
 MAX_CHARS = 2000
 MAX_NEW_TOKENS = 512
@@ -28,7 +29,7 @@ def validate_request(request):
     source, target, text = (request.get(k) for k in ('source', 'target', 'text'))
     if source not in LANGUAGES or target not in LANGUAGES:
         raise ValueError('不支持的语言代码')
-    if not isinstance(text, str) or not text.strip():
+    if not isinstance(text, str) or not text.strip() or '\0' in text:
         raise ValueError('翻译文本不能为空')
     if len(text) > MAX_CHARS:
         raise ValueError('翻译文本超过 2000 字符限制，请缩短字幕分句')
@@ -47,7 +48,8 @@ def select_device(torch, allow_cpu):
         return 'cuda', dtype
     if not allow_cpu:
         raise RuntimeError('CUDA 不可用；请检查 NVIDIA 驱动和 CUDA 版 PyTorch。CPU 模式需显式启用，不保证实时性能')
-    return 'cpu', torch.float32
+    cpu_bf16 = getattr(getattr(torch, 'cpu', None), '_is_avx512_bf16_supported', lambda: False)
+    return 'cpu', torch.bfloat16 if cpu_bf16() else torch.float32
 
 
 def check_completion(ids, eos_ids):
@@ -144,10 +146,16 @@ def main():
     try:
         if len(sys.argv) != 2:
             raise ValueError('用法：python -I -u windows-hymt2-worker.py MODEL_DIR')
+        started = time.monotonic()
         with contextlib.redirect_stdout(sys.stderr):
             translator = Translator(sys.argv[1])
+            warmup_started = time.monotonic()
+            translator.translate('en', 'zh', 'Hello.')
+        warmup_ms = round((time.monotonic() - warmup_started) * 1000)
         emit(output, {'type': 'ready', 'protocol': 1, 'backend': 'transformers',
                       'model': 'Hy-MT2-1.8B', 'device': translator.device, 'dtype': translator.dtype,
+                      'torch': translator.torch.__version__, 'warmup_ms': warmup_ms,
+                      'startup_ms': round((time.monotonic() - started) * 1000),
                       'warning': 'CPU 模式不保证实时性能' if translator.device == 'cpu' else None})
         serve(translator, sys.stdin, output)
         return 0

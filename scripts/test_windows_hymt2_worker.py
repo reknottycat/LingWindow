@@ -40,7 +40,7 @@ class WorkerTests(unittest.TestCase):
 
     def test_limits(self):
         worker.validate_request(self.request(text='字' * 2000))
-        for changes in [dict(text='字' * 2001), dict(text='  '), dict(text=None),
+        for changes in [dict(text='字' * 2001), dict(text='  '), dict(text=None), dict(text='a\0b'),
                         dict(source='auto'), dict(target='invalid'), dict(id=True),
                         dict(id=-1), dict(op='unknown')]:
             with self.assertRaises(ValueError):
@@ -87,6 +87,9 @@ class WorkerTests(unittest.TestCase):
         torch.cuda.available = False
         with self.assertRaises(RuntimeError): worker.select_device(torch, False)
         self.assertEqual(worker.select_device(torch, True), ('cpu', 'fp32'))
+        from types import SimpleNamespace
+        torch.cpu = SimpleNamespace(_is_avx512_bf16_supported=lambda: True)
+        self.assertEqual(worker.select_device(torch, True), ('cpu', 'bf16'))
 
     def test_embedded_launch_failure_is_json(self):
         import subprocess
@@ -102,6 +105,20 @@ class WorkerTests(unittest.TestCase):
         self.assertEqual(setup.MANIFEST['model.safetensors']['size'], 4077072784)
         self.assertTrue(all(len(item['sha256']) == 64 for item in setup.MANIFEST.values()))
         self.assertTrue(all(len(item['revision']) == 40 for item in setup.MANIFEST.values()))
+
+    def test_range_resume(self):
+        import tempfile
+        from unittest.mock import patch
+        class Response(io.BytesIO):
+            status = 206
+            headers = {'Content-Range': 'bytes 2-5/6'}
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'model.partial'
+            path.write_bytes(b'ab')
+            with patch.object(setup.urllib.request, 'urlopen', return_value=Response(b'cdef')) as request:
+                setup.download_large('https://modelscope.cn/test', path, 6)
+                self.assertEqual(request.call_args.args[0].headers['Range'], 'bytes=2-5')
+            self.assertEqual(path.read_bytes(), b'abcdef')
 
     def test_hash_validation(self):
         import hashlib

@@ -110,6 +110,9 @@ def download_model(directory):
 
 
 def main():
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, 'reconfigure'):
+            stream.reconfigure(encoding='utf-8')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--model-dir', type=Path, required=True,
                         help='应用模型根目录中的 mt-hymt2 文件夹（不是根目录）')
@@ -127,18 +130,18 @@ def main():
     python = envdir / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
     if not python.exists():
         venv.EnvBuilder(with_pip=True).create(envdir)
-    subprocess.run([str(python), '-m', 'pip', 'install', '--upgrade', 'pip'], check=True)
+    subprocess.run([str(python), '-X', 'utf8', '-m', 'pip', 'install', '--upgrade', 'pip'], check=True)
     variant = 'cpu' if args.cpu else 'cu128'
     index = 'https://download.pytorch.org/whl/' + variant
-    subprocess.run([str(python), '-m', 'pip', 'install', 'torch==2.11.0+' + variant,
+    subprocess.run([str(python), '-X', 'utf8', '-m', 'pip', 'install', 'torch==2.11.0+' + variant,
                     '--index-url', index], check=True)
     requirements = Path(__file__).with_name('requirements-windows-hymt2.txt')
-    subprocess.run([str(python), '-m', 'pip', 'install', '-r', str(requirements)], check=True)
+    subprocess.run([str(python), '-X', 'utf8', '-m', 'pip', 'install', '-r', str(requirements)], check=True)
     check = ('import torch; from transformers.models.auto.configuration_auto import CONFIG_MAPPING; '
              'assert "hunyuan_v1_dense" in CONFIG_MAPPING; '
              + ('' if args.cpu else 'assert torch.cuda.is_available(), "CUDA 不可用，请检查驱动；CPU 需 --cpu"; ')
              + 'print(torch.__version__, torch.cuda.is_available())')
-    subprocess.run([str(python), '-I', '-c', check], check=True)
+    subprocess.run([str(python), '-I', '-X', 'utf8', '-c', check], check=True)
     temporary = directory / 'runtime.json.partial'
     temporary.write_text(json.dumps({'python': str(python), 'allow_cpu': args.cpu}, indent=2), encoding='utf-8')
     os.replace(temporary, directory / 'runtime.json')

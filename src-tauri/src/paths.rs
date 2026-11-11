@@ -148,6 +148,17 @@ fn validate_models_dir_within(raw: &str, resource: Option<&Path>) -> Result<Path
     Ok(path)
 }
 
+#[cfg(debug_assertions)]
+fn development_models_root() -> Option<PathBuf> {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/models");
+    path.is_dir().then_some(path)
+}
+
+#[cfg(not(debug_assertions))]
+fn development_models_root() -> Option<PathBuf> {
+    None
+}
+
 pub fn search_roots(app: &AppHandle) -> ModelSearchRoots {
     let env = std::env::var(ENV_MODEL_DIR)
         .ok()
@@ -161,10 +172,7 @@ pub fn search_roots(app: &AppHandle) -> ModelSearchRoots {
         .map(|dir| simplify(dir.join("models")))
         .filter(|p| p.is_dir());
 
-    let dev = {
-        let p = Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/models");
-        p.is_dir().then_some(p)
-    };
+    let dev = development_models_root();
 
     let mut user_roots = user_models_roots(app);
     let user = user_roots.first().cloned();
@@ -515,6 +523,56 @@ mod tests {
             std::fs::write(root.join(dir_name).join(f), b"x").unwrap();
         }
         root
+    }
+
+    #[cfg(debug_assertions)]
+    #[test]
+    fn debug_keeps_source_tree_model_fallback() {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("assets/models");
+        let expected = path.is_dir().then_some(path);
+        assert_eq!(
+            development_models_root(),
+            expected,
+            "调试构建保留源码模型回退"
+        );
+    }
+
+    #[cfg(not(debug_assertions))]
+    #[test]
+    fn release_never_searches_build_source_tree() {
+        assert!(
+            development_models_root().is_none(),
+            "发行构建不能携带源码模型路径"
+        );
+    }
+
+    #[cfg(not(debug_assertions))]
+    #[test]
+    fn release_keeps_bundled_models_and_hymt2_user_models() {
+        let asr = catalog::asr_entry(AsrModelTier::Builtin);
+        let hymt2 = catalog::mt_entry(MtModelTier::Hymt2);
+        let bundled = root_with(asr.installed_dir(), &[]);
+        let user = root_with(hymt2.installed_dir(), &[]);
+        let roots = ModelSearchRoots {
+            bundled: Some(bundled.clone()),
+            user: Some(user.clone()),
+            dev: development_models_root(),
+            ..Default::default()
+        };
+        let got = locate_asr(&roots, AsrModelTier::Builtin).unwrap();
+        assert_eq!(
+            got.via,
+            ResolutionVia::BundledResource,
+            "发行版使用包内识别模型"
+        );
+        let got = locate_mt_root(&roots, hymt2).unwrap();
+        assert_eq!(
+            got.via,
+            ResolutionVia::UserData,
+            "发行版保留用户 HY-MT2 模型"
+        );
+        std::fs::remove_dir_all(bundled).ok();
+        std::fs::remove_dir_all(user).ok();
     }
 
     #[test]

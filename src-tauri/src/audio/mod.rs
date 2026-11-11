@@ -557,7 +557,7 @@ mod tests {
     }
 
     #[test]
-    fn system_audio_permission_points_at_the_recording_pane() {
+    fn system_audio_permission_provides_platform_appropriate_guidance() {
         let e = classify_open_error(flexaudio::Error::PermissionDenied {
             permission: flexaudio::Permission::SystemAudio,
             detail: String::new(),
@@ -570,7 +570,15 @@ mod tests {
             panic!("应归类为权限错误");
         };
         assert_eq!(permission, "systemAudio");
+        #[cfg(target_os = "macos")]
         assert!(message.contains("System Audio Recording"), "{message}");
+        #[cfg(target_os = "windows")]
+        {
+            assert!(message.contains("Windows denied access"), "{message}");
+            assert!(message.contains("security policy"), "{message}");
+            assert!(message.contains("your account is allowed"), "{message}");
+            assert!(!message.contains("System Audio Recording"), "{message}");
+        }
     }
 
     #[test]

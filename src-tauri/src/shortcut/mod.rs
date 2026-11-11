@@ -92,6 +92,10 @@ pub fn pretty(accelerator: &str) -> String {
     let (cmd, ctrl, alt, shift) = ("⌘", "⌃", "⌥", "⇧");
     #[cfg(not(target_os = "macos"))]
     let (cmd, ctrl, alt, shift) = ("Ctrl", "Ctrl", "Alt", "Shift");
+    #[cfg(target_os = "macos")]
+    let separator = "";
+    #[cfg(not(target_os = "macos"))]
+    let separator = "+";
 
     accelerator
         .split('+')
@@ -102,7 +106,8 @@ pub fn pretty(accelerator: &str) -> String {
             "Shift" => shift.to_owned(),
             other => other.strip_prefix("Key").unwrap_or(other).to_owned(),
         })
-        .collect()
+        .collect::<Vec<_>>()
+        .join(separator)
 }
 
 fn accelerator_from(saved: &std::collections::HashMap<String, String>, b: &Binding) -> String {

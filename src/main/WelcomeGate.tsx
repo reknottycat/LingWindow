@@ -18,7 +18,7 @@ export function WelcomeGate() {
           <header className="space-y-3 pt-6 text-center">
             <LogoMark className="mx-auto block h-16 text-[var(--color-ink-0)] [&>svg]:block [&>svg]:h-full [&>svg]:w-auto" />
             <h1 className="font-semibold text-[var(--color-ink-0)] text-xl">
-              {t('welcome.title', { name: info?.name ?? 'AudioScript' })}
+              {t('welcome.title', { name: info?.name ?? 'LingWindow' })}
             </h1>
             <p className="text-[var(--color-ink-1)] text-sm">{t('welcome.subtitle')}</p>
           </header>

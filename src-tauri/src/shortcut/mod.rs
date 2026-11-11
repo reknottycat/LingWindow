@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
 
 use crate::config::OverlayMode;
@@ -92,6 +92,7 @@ pub fn pretty(accelerator: &str) -> String {
     let (cmd, ctrl, alt, shift) = ("⌘", "⌃", "⌥", "⇧");
     #[cfg(not(target_os = "macos"))]
     let (cmd, ctrl, alt, shift) = ("Ctrl", "Ctrl", "Alt", "Shift");
+
     #[cfg(target_os = "macos")]
     let separator = "";
     #[cfg(not(target_os = "macos"))]
@@ -187,7 +188,11 @@ pub fn rebind(app: &AppHandle, id: &str, accelerator: &str) -> Result<Vec<Hotkey
     })?;
 
     tracing::info!(id, old = %old, new = %accel, "热键已改绑");
-    Ok(list(app))
+    let current = list(app);
+    if let Err(e) = app.emit("overlay://shortcuts", &current) {
+        tracing::debug!("广播悬浮窗快捷键失败：{e}");
+    }
+    Ok(current)
 }
 
 pub fn init(app: &AppHandle) -> Result<(), String> {

@@ -6,17 +6,17 @@
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#000000" />
 
-    <title>AudioScript 声稿 — 离线实时转写与双语悬浮字幕</title>
+    <title>聆窗 LingWindow — 离线实时转写与双语悬浮字幕</title>
     <meta
       name="description"
-      content="AudioScript 声稿是一款离线优先的实时转写与双语悬浮字幕桌面应用：监听电脑正在播放的声音，把外语播客、视频与会议实时变成原文与译文。识别与翻译都在本机完成，内置中英文模型，可选 29+ 种语言，支持 macOS、Windows、Linux。"
+      content="聆窗 LingWindow是一款离线优先的实时转写与双语悬浮字幕桌面应用：监听电脑正在播放的声音，把外语播客、视频与会议实时变成原文与译文。识别与翻译都在本机完成，内置中英文模型，可选 29+ 种语言，支持 macOS、Windows、Linux。"
     />
     <meta name="author" content="Nico" />
-    <meta name="application-name" content="AudioScript 声稿" />
+    <meta name="application-name" content="聆窗 LingWindow" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta
       name="keywords"
-      content="实时字幕,离线转写,语音识别,机器翻译,双语字幕,悬浮字幕,macOS,Windows,Linux,开源,Tauri,Rust,AudioScript"
+      content="实时字幕,离线转写,语音识别,机器翻译,双语字幕,悬浮字幕,macOS,Windows,Linux,开源,Tauri,Rust,LingWindow"
     />
     <link rel="canonical" href="https://audioscript.looplooptech.com/" />
     <link rel="alternate" type="text/plain" href="https://audioscript.looplooptech.com/llms.txt" title="LLM summary" />
@@ -27,8 +27,8 @@
     />
 
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="AudioScript 声稿" />
-    <meta property="og:title" content="AudioScript 声稿 — 离线实时转写与双语悬浮字幕" />
+    <meta property="og:site_name" content="聆窗 LingWindow" />
+    <meta property="og:title" content="聆窗 LingWindow — 离线实时转写与双语悬浮字幕" />
     <meta
       property="og:description"
       content="把系统里正在播放的外语，实时变成屏幕上的双语字幕。识别与翻译都在本机完成。"
@@ -38,17 +38,17 @@
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="AudioScript 声稿：离线实时转写与双语悬浮字幕" />
+    <meta property="og:image:alt" content="聆窗 LingWindow：离线实时转写与双语悬浮字幕" />
     <meta property="og:locale" content="zh_CN" />
     <meta property="og:locale:alternate" content="en_US" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="AudioScript 声稿 — 离线实时转写与双语悬浮字幕" />
+    <meta name="twitter:title" content="聆窗 LingWindow — 离线实时转写与双语悬浮字幕" />
     <meta
       name="twitter:description"
       content="把系统里正在播放的外语，实时变成屏幕上的双语字幕。识别与翻译都在本机完成。"
     />
     <meta name="twitter:image" content="https://audioscript.looplooptech.com/og.png" />
-    <meta name="twitter:image:alt" content="AudioScript 声稿：离线实时转写与双语悬浮字幕" />
+    <meta name="twitter:image:alt" content="聆窗 LingWindow：离线实时转写与双语悬浮字幕" />
 
     <script>
       (() => {
@@ -449,17 +449,18 @@
       {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
-        "name": "AudioScript 声稿",
-        "alternateName": "AudioScript",
-        "description": "AudioScript 声稿是一款离线优先的实时转写与双语悬浮字幕桌面应用：监听电脑正在播放的声音，把外语播客、视频与会议实时变成原文与译文。识别与翻译全部在本机完成，内置中英文模型，可选 29+ 种语言。",
+        "name": "聆窗 LingWindow",
+        "alternateName": "LingWindow",
+        "description": "聆窗 LingWindow是一款离线优先的实时转写与双语悬浮字幕桌面应用：监听电脑正在播放的声音，把外语播客、视频与会议实时变成原文与译文。识别与翻译全部在本机完成，内置中英文模型，可选 29+ 种语言。",
         "url": "https://audioscript.looplooptech.com/",
         "image": "https://audioscript.looplooptech.com/og.png",
         "operatingSystem": "macOS 14.2+, Windows 10+, Ubuntu 24",
         "applicationCategory": "MultimediaApplication",
-        "softwareVersion": "0.6.2",
+        "softwareVersion": "0.7.0",
         "inLanguage": ["zh-CN", "zh-TW", "en", "ja", "ko", "fr", "de", "es", "pt-BR", "ru", "it", "id", "ar"],
         "featureList": [
           "系统声音直接采集：macOS Core Audio Process Tap，Windows WASAPI loopback，无需虚拟声卡",
+          "按应用采集：最多同时选择 4 个应用的声音，与其他应用隔离",
           "流式语音识别，partial 实时刷新、句末定稿",
           "原文在上、译文在下的双语悬浮字幕，可调字号、不透明度、行数与流光边框",
           "锁定后鼠标穿透、不抢焦点的置顶悬浮窗",
@@ -468,10 +469,10 @@
           "托盘常驻、开机启动，定稿段落带时间戳导出 Markdown"
         ],
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-        "license": "https://github.com/niyongsheng/AudioScript/blob/main/LICENSE",
-        "downloadUrl": "https://github.com/niyongsheng/AudioScript/releases/latest",
-        "codeRepository": "https://github.com/niyongsheng/AudioScript",
-        "sameAs": ["https://github.com/niyongsheng/AudioScript", "https://x.com/niyongsheng"],
+        "license": "https://github.com/reknottycat/AudioScript-Windows/blob/main/LICENSE",
+        "downloadUrl": "https://github.com/reknottycat/AudioScript-Windows",
+        "codeRepository": "https://github.com/reknottycat/AudioScript-Windows",
+        "sameAs": ["https://github.com/reknottycat/AudioScript-Windows", "https://x.com/niyongsheng"],
         "author": { "@type": "Person", "name": "Nico", "url": "https://github.com/niyongsheng" }
       }
     </script>
@@ -493,7 +494,7 @@
             "name": "支持哪些系统和语言？音频会上传吗？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "macOS 14.2 及以上的 Apple Silicon、Windows 10 及以上、Ubuntu 24，不提供 Intel Mac 版本。中英互译开箱即用，翻译方向需手动选择；多语言模型可选下载，macOS 26 及以上可用系统识别与翻译。识别与翻译都在本机完成，只有模型下载与更新检查需要联网；Aptabase 匿名统计不含音频与文本，可在「通用 → 隐私」关闭。"
+              "text": "macOS 14.2 及以上的 Apple Silicon、Windows 10 及以上、Ubuntu 24，不提供 Intel Mac 版本。中英互译开箱即用，翻译方向需手动选择；多语言模型可选下载，macOS 26 及以上可用系统识别与翻译。识别与翻译都在本机完成，只有模型下载、更新检查与错误上报需要联网；Aptabase 匿名统计与 Sentry 崩溃报告不含音频与转写文本，可在「通用 → 隐私」关闭。"
             }
           },
           {
@@ -501,7 +502,7 @@
             "name": "macOS 提示应用已损坏，无法打开？",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "这是 Gatekeeper 拦截未签名构建的提示，不是文件损坏。把应用拖入「应用程序」后，在终端执行下面的命令：xattr -dr com.apple.quarantine /Applications/AudioScript.app 即可正常打开。"
+              "text": "这是 Gatekeeper 拦截未签名构建的提示，不是文件损坏。把应用拖入「应用程序」后，在终端执行下面的命令：xattr -dr com.apple.quarantine /Applications/LingWindow.app 即可正常打开。"
             }
           },
           {
@@ -527,10 +528,10 @@
       {
         "@context": "https://schema.org",
         "@type": "HowTo",
-        "name": "如何使用 AudioScript 声稿",
+        "name": "如何使用 聆窗 LingWindow",
         "description": "下载安装后，三步开始实时双语字幕。",
         "inLanguage": "zh-CN",
-        "tool": [{ "@type": "HowToTool", "name": "AudioScript 声稿" }],
+        "tool": [{ "@type": "HowToTool", "name": "聆窗 LingWindow" }],
         "step": [
           {
             "@type": "HowToStep",
@@ -542,7 +543,7 @@
             "@type": "HowToStep",
             "position": 2,
             "name": "选声音和语言",
-            "text": "选择系统声音、麦克风或两者混合，并在设置里选择源语言与目标语言。"
+            "text": "选择系统声音、应用声音、麦克风或混合，并在设置里选择源语言与目标语言。"
           },
           {
             "@type": "HowToStep",
@@ -556,6 +557,7 @@
   </head>
 
   <body>
+    <aside style="padding:12px 24px;text-align:center;font-size:14px;background:#172e42;color:#e6f8f5">聆窗 LingWindow 是基于 AudioScript v0.7.0 的独立衍生版，感谢原作者 <a href="https://github.com/niyongsheng/AudioScript" style="color:#80e6d3">Nico（MIT）</a>。发布状态与可下载平台以本项目仓库为准。 / Independent derivative; release availability is listed in our repository.</aside>
     <aside style="padding: 12px; text-align: center">Local HY-MT2 build · <a href="HYMT2-LOCAL.md">Apple Silicon setup / 无声测试说明</a> · en/ru → zh only</aside>
     <a class="skip" href="#main"
       ><span class="zh" lang="zh-CN">跳到主要内容</span><span class="en" lang="en">Skip to content</span></a
@@ -563,13 +565,13 @@
 
     <header class="site-header">
       <div class="nav">
-        <a class="brand" href="#top" aria-label="AudioScript 声稿">
+        <a class="brand" href="#top" aria-label="聆窗 LingWindow">
           <svg viewBox="68 -26 520 520" aria-hidden="true">
             <g transform="translate(16,-78) scale(0.609375)" fill="currentColor">
               <path d="M512 128a42.666667 42.666667 0 0 1 42.56 39.466667L554.666667 170.666667v682.666666a42.666667 42.666667 0 0 1-85.226667 3.2L469.333333 853.333333V170.666667a42.666667 42.666667 0 0 1 42.666667-42.666667z m192 128a42.666667 42.666667 0 0 1 42.56 39.466667L746.666667 298.666667v426.666666a42.666667 42.666667 0 0 1-85.226667 3.2L661.333333 725.333333V298.666667a42.666667 42.666667 0 0 1 42.666667-42.666667z m-384 0a42.666667 42.666667 0 0 1 42.56 39.466667L362.666667 298.666667v426.666666a42.666667 42.666667 0 0 1-85.226667 3.2L277.333333 725.333333V298.666667a42.666667 42.666667 0 0 1 42.666667-42.666667z M831.333 469.333H896a42.667 42.667 0 0 1 0 85.334H831.333a42.667 42.667 0 0 1 0-85.334zM128 384a42.666667 42.666667 0 0 1 42.56 39.466667L170.666667 426.666667v170.666666a42.666667 42.666667 0 0 1-85.226667 3.2L85.333333 597.333333v-170.666666a42.666667 42.666667 0 0 1 42.666667-42.666667z" />
             </g>
           </svg>
-          <span>AudioScript</span>
+          <span>LingWindow</span>
           <span class="brand-cn zh" lang="zh-CN">声稿</span>
         </a>
 
@@ -588,7 +590,7 @@
           </div>
           <a
             class="nav-github"
-            href="https://github.com/niyongsheng/AudioScript"
+            href="https://github.com/reknottycat/AudioScript-Windows"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="GitHub"
@@ -637,15 +639,15 @@
           </p>
           <h1 id="hero-title"><span class="zh" lang="zh-CN">所闻，即所见。</span><span class="en" lang="en">Hear it. Read it.</span></h1>
           <p class="hero-sub">
-            <span class="zh" lang="zh-CN">AudioScript 声稿是一款离线优先的桌面应用：监听电脑正在播放的声音，把外语播客、视频和会议实时变成原文与译文的双语字幕。识别和翻译都在这台机器上完成，内置中英文模型，可选 29+ 种语言。</span>
-            <span class="en" lang="en">AudioScript is an offline-first desktop app that listens to whatever your computer is playing and turns foreign podcasts, videos, and meetings into live bilingual subtitles: source text on top, translation below. Recognition and translation both run on your machine. Chinese and English models are built in, with 29+ languages available.</span>
+            <span class="zh" lang="zh-CN">聆窗 LingWindow是一款离线优先的桌面应用：监听电脑正在播放的声音，把外语播客、视频和会议实时变成原文与译文的双语字幕。识别和翻译都在这台机器上完成，内置中英文模型，可选 29+ 种语言。</span>
+            <span class="en" lang="en">LingWindow is an offline-first desktop app that listens to whatever your computer is playing and turns foreign podcasts, videos, and meetings into live bilingual subtitles: source text on top, translation below. Recognition and translation both run on your machine. Chinese and English models are built in, with 29+ languages available.</span>
           </p>
           <div class="hero-actions">
             <a class="btn btn-primary btn-lg magnet" href="#download">
               <svg class="btn-icon" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z" /></svg>
               <span class="zh" lang="zh-CN">下载桌面版</span><span class="en" lang="en">Download for desktop</span>
             </a>
-            <a class="btn btn-outline btn-lg" href="https://github.com/niyongsheng/AudioScript" target="_blank" rel="noopener noreferrer">
+            <a class="btn btn-outline btn-lg" href="https://github.com/reknottycat/AudioScript-Windows" target="_blank" rel="noopener noreferrer">
               <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56v-2.17c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.23-1.28-5.23-5.68 0-1.25.45-2.28 1.19-3.08-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.08 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.68.8.56A11.52 11.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z" /></svg>
               <span class="zh" lang="zh-CN">查看源码</span><span class="en" lang="en">View source</span>
             </a>
@@ -660,13 +662,13 @@
           <div class="app-window" aria-hidden="true">
             <div class="app-bar">
               <span class="traffic"><i></i><i></i><i></i></span>
-              <span class="app-title">AudioScript 声稿</span>
+              <span class="app-title">聆窗 LingWindow</span>
             </div>
             <div class="app-body">
               <aside class="app-sidebar">
                 <div class="app-brand">
                   <svg viewBox="68 -26 520 520" aria-hidden="true"><g transform="translate(16,-78) scale(0.609375)" fill="currentColor"><path d="M512 128a42.666667 42.666667 0 0 1 42.56 39.466667L554.666667 170.666667v682.666666a42.666667 42.666667 0 0 1-85.226667 3.2L469.333333 853.333333V170.666667a42.666667 42.666667 0 0 1 42.666667-42.666667z m192 128a42.666667 42.666667 0 0 1 42.56 39.466667L746.666667 298.666667v426.666666a42.666667 42.666667 0 0 1-85.226667 3.2L661.333333 725.333333V298.666667a42.666667 42.666667 0 0 1 42.666667-42.666667z m-384 0a42.666667 42.666667 0 0 1 42.56 39.466667L362.666667 298.666667v426.666666a42.666667 42.666667 0 0 1-85.226667 3.2L277.333333 725.333333V298.666667a42.666667 42.666667 0 0 1 42.666667-42.666667z M831.333 469.333H896a42.667 42.667 0 0 1 0 85.334H831.333a42.667 42.667 0 0 1 0-85.334zM128 384a42.666667 42.666667 0 0 1 42.56 39.466667L170.666667 426.666667v170.666666a42.666667 42.666667 0 0 1-85.226667 3.2L85.333333 597.333333v-170.666666a42.666667 42.666667 0 0 1 42.666667-42.666667z" /></g></svg>
-                  <span>AudioScript</span>
+                  <span>LingWindow</span>
                 </div>
                 <button type="button" class="app-stop" tabindex="-1"><i>■</i><span class="zh" lang="zh-CN">停止转写</span><span class="en" lang="en">Stop</span></button>
                 <p class="app-status"><i></i><span>00:42</span><span>·</span><span class="zh" lang="zh-CN">系统声音 · 采集中</span><span class="en" lang="en">System audio</span></p>
@@ -803,8 +805,8 @@
               <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M56,96v64a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0ZM88,24a8,8,0,0,0-8,8V224a8,8,0,0,0,16,0V32A8,8,0,0,0,88,24Zm40,32a8,8,0,0,0-8,8V192a8,8,0,0,0,16,0V64A8,8,0,0,0,128,56Zm40,32a8,8,0,0,0-8,8v64a8,8,0,0,0,16,0V96A8,8,0,0,0,168,88Zm40-16a8,8,0,0,0-8,8v96a8,8,0,0,0,16,0V80A8,8,0,0,0,208,72Z" /></svg>
               <h3><span class="zh" lang="zh-CN">系统声音，直接采集。</span><span class="en" lang="en">System audio, captured directly.</span></h3>
               <p>
-                <span class="zh" lang="zh-CN">macOS 使用 Core Audio Process Tap，Windows 使用 WASAPI loopback。不需要 BlackHole，也不需要改音频路由。</span
-                ><span class="en" lang="en">Core Audio Process Tap on macOS, WASAPI loopback on Windows. No BlackHole, no routing setup.</span>
+                <span class="zh" lang="zh-CN">macOS 使用 Core Audio Process Tap，Windows 使用 WASAPI loopback。不需要 BlackHole，也不需要改音频路由。还能只采集指定应用的声音，最多 4 个。</span
+                ><span class="en" lang="en">Core Audio Process Tap on macOS, WASAPI loopback on Windows. No BlackHole, no routing setup. You can also capture up to four specific apps.</span>
               </p>
             </article>
             <article class="feature" data-reveal style="--d: 60ms">
@@ -853,7 +855,7 @@
             <article class="step" data-reveal style="--d: 60ms">
               <p class="step-index">02</p>
               <h3><span class="zh" lang="zh-CN">选声音和语言</span><span class="en" lang="en">Pick the audio and the languages</span></h3>
-              <p><span class="zh" lang="zh-CN">系统声音、麦克风，或两者混合；源语言与目标语言在设置里选。</span><span class="en" lang="en">System audio, microphone, or both. Choose the source and target language in settings.</span></p>
+              <p><span class="zh" lang="zh-CN">系统声音、应用声音、麦克风，或混合；源语言与目标语言在设置里选。</span><span class="en" lang="en">System audio, one app’s audio, microphone, or a mix. Choose the source and target language in settings.</span></p>
             </article>
             <article class="step" data-reveal style="--d: 120ms">
               <p class="step-index">03</p>
@@ -1069,8 +1071,8 @@
             </p>
           </header>
           <p class="release mono">
-            <span data-version>v0.6.2</span><i>·</i><time data-date data-iso="2026-11-06" datetime="2026-11-06">2026 年 11 月 6 日</time><i>·</i
-            ><a href="https://github.com/niyongsheng/AudioScript/releases/latest" target="_blank" rel="noopener noreferrer"
+            <span data-version>v0.7.0</span><i>·</i><time data-date data-iso="2026-11-11" datetime="2026-11-11">2026 年 11 月 11 日</time><i>·</i
+            ><a href="https://github.com/reknottycat/AudioScript-Windows" target="_blank" rel="noopener noreferrer"
               ><span class="zh" lang="zh-CN">全部版本</span><span class="en" lang="en">All releases</span></a
             >
           </p>
@@ -1084,7 +1086,7 @@
               <p class="meta">14.2+ · Apple Silicon · .dmg</p>
               <p class="note"><span class="zh" lang="zh-CN">当前不提供 Intel Mac 安装包。</span><span class="en" lang="en">No Intel Mac build at the moment.</span></p>
               <div class="actions">
-                <a class="btn btn-primary btn-block" href="https://github.com/niyongsheng/AudioScript/releases/latest" target="_blank" rel="noopener noreferrer" data-asset="aarch64.dmg"
+                <a class="btn btn-primary btn-block" href="https://github.com/reknottycat/AudioScript-Windows" target="_blank" rel="noopener noreferrer" data-asset="aarch64.dmg"
                   ><span class="zh" lang="zh-CN">下载 .dmg</span><span class="en" lang="en">Download .dmg</span></a
                 >
               </div>
@@ -1097,10 +1099,10 @@
               <p class="meta">10+ · x64 · .exe / .msi</p>
               <p class="note"><span class="zh" lang="zh-CN">提供 NSIS 安装包与 MSI。</span><span class="en" lang="en">NSIS installer and MSI available.</span></p>
               <div class="actions">
-                <a class="btn btn-primary btn-block" href="https://github.com/niyongsheng/AudioScript/releases/latest" target="_blank" rel="noopener noreferrer" data-asset="x64-setup.exe"
+                <a class="btn btn-primary btn-block" href="https://github.com/reknottycat/AudioScript-Windows" target="_blank" rel="noopener noreferrer" data-asset="x64-setup.exe"
                   ><span class="zh" lang="zh-CN">下载 .exe</span><span class="en" lang="en">Download .exe</span></a
                 >
-                <a class="btn btn-outline btn-block" href="https://github.com/niyongsheng/AudioScript/releases/latest" target="_blank" rel="noopener noreferrer" data-asset="x64_en-US.msi"
+                <a class="btn btn-outline btn-block" href="https://github.com/reknottycat/AudioScript-Windows" target="_blank" rel="noopener noreferrer" data-asset="x64_en-US.msi"
                   ><span class="zh" lang="zh-CN">下载 .msi</span><span class="en" lang="en">Download .msi</span></a
                 >
               </div>
@@ -1113,10 +1115,10 @@
               <p class="meta">Ubuntu 24 · x64 · .deb / AppImage</p>
               <p class="note"><span class="zh" lang="zh-CN">二等支持；GNOME Wayland 下无法保证窗口置顶。</span><span class="en" lang="en">Second tier support; topmost is unavailable on GNOME Wayland.</span></p>
               <div class="actions">
-                <a class="btn btn-primary btn-block" href="https://github.com/niyongsheng/AudioScript/releases/latest" target="_blank" rel="noopener noreferrer" data-asset="amd64.deb"
+                <a class="btn btn-primary btn-block" href="https://github.com/reknottycat/AudioScript-Windows" target="_blank" rel="noopener noreferrer" data-asset="amd64.deb"
                   ><span class="zh" lang="zh-CN">下载 .deb</span><span class="en" lang="en">Download .deb</span></a
                 >
-                <a class="btn btn-outline btn-block" href="https://github.com/niyongsheng/AudioScript/releases/latest" target="_blank" rel="noopener noreferrer" data-asset="amd64.AppImage"
+                <a class="btn btn-outline btn-block" href="https://github.com/reknottycat/AudioScript-Windows" target="_blank" rel="noopener noreferrer" data-asset="amd64.AppImage"
                   ><span class="zh" lang="zh-CN">下载 AppImage</span><span class="en" lang="en">Download AppImage</span></a
                 >
               </div>
@@ -1177,15 +1179,15 @@
               <details name="faq">
                 <summary><span class="zh" lang="zh-CN">支持哪些系统和语言？音频会上传吗？</span><span class="en" lang="en">Which systems and languages are supported? Is my audio uploaded?</span></summary>
                 <p>
-                  <span class="zh" lang="zh-CN">macOS 14.2 及以上的 Apple Silicon、Windows 10 及以上、Ubuntu 24，不提供 Intel Mac 版本。中英互译开箱即用，翻译方向需手动选择；多语言模型可选下载，macOS 26 及以上可用系统识别与翻译。<br>识别与翻译都在本机完成，只有模型下载与更新检查需要联网；<br>Aptabase 匿名统计不含音频与文本，可在「通用 → 隐私」关闭。</span
-                  ><span class="en" lang="en">macOS 14.2+ on Apple Silicon, Windows 10+, Ubuntu 24; no Intel Mac build. English ↔ Chinese works out of the box and you pick the translation direction; optional multilingual models are available, and macOS 26+ offers system recognition and translation.<br>Recognition and translation run locally; only model downloads and update checks need the network.<br>The anonymous Aptabase stats exclude audio and text and can be disabled under General → Privacy.</span>
+                  <span class="zh" lang="zh-CN">macOS 14.2 及以上的 Apple Silicon、Windows 10 及以上、Ubuntu 24，不提供 Intel Mac 版本；按应用采集需要 macOS 14.4+、Windows build 20348+ 或 Linux PipeWire。中英互译开箱即用，翻译方向需手动选择；多语言模型可选下载，macOS 26 及以上可用系统识别与翻译。<br>识别与翻译都在本机完成，只有模型下载、更新检查与错误上报需要联网；<br>Aptabase 匿名统计与 Sentry 崩溃报告不含音频与转写文本，可在「通用 → 隐私」关闭。</span
+                  ><span class="en" lang="en">macOS 14.2+ on Apple Silicon, Windows 10+, Ubuntu 24; no Intel Mac build. Per-app capture needs macOS 14.4+, Windows build 20348+, or Linux PipeWire. English ↔ Chinese works out of the box and you pick the translation direction; optional multilingual models are available, and macOS 26+ offers system recognition and translation.<br>Recognition and translation run locally; only model downloads, update checks, and error reports need the network.<br>Anonymous Aptabase stats and Sentry crash reports exclude audio and transcript text and can be disabled under General → Privacy.</span>
                 </p>
               </details>
               <details name="faq">
                 <summary><span class="zh" lang="zh-CN">macOS 提示应用已损坏，无法打开？</span><span class="en" lang="en">macOS says the app is damaged and will not open?</span></summary>
                 <p>
-                  <span class="zh" lang="zh-CN">这是 Gatekeeper 拦截未签名构建的提示，不是文件损坏。把应用拖入「应用程序」后，在终端执行下面的命令：<code>xattr -dr com.apple.quarantine /Applications/AudioScript.app</code> 即可正常打开。</span
-                  ><span class="en" lang="en">Gatekeeper is blocking an unsigned build; the file itself is fine. Drag the app to Applications, then run this command in Terminal:<code>xattr -dr com.apple.quarantine /Applications/AudioScript.app</code> The app will open normally.</span>
+                  <span class="zh" lang="zh-CN">这是 Gatekeeper 拦截未签名构建的提示，不是文件损坏。把应用拖入「应用程序」后，在终端执行下面的命令：<code>xattr -dr com.apple.quarantine /Applications/LingWindow.app</code> 即可正常打开。</span
+                  ><span class="en" lang="en">Gatekeeper is blocking an unsigned build; the file itself is fine. Drag the app to Applications, then run this command in Terminal:<code>xattr -dr com.apple.quarantine /Applications/LingWindow.app</code> The app will open normally.</span>
                 </p>
               </details>
               <details name="faq">
@@ -1208,7 +1210,7 @@
               <h3><span class="zh" lang="zh-CN">还有疑问？</span><span class="en" lang="en">Still have questions?</span></h3>
               <p><span class="zh" lang="zh-CN">带上系统版本、应用版本、复现步骤和日志提交 Issue，我们会尽快跟进。</span><span class="en" lang="en">Include your OS, app version, reproduction steps, and logs; we’ll follow up as soon as we can.</span></p>
               <div class="faq-aside-actions">
-                <a class="btn btn-outline btn-block" href="https://github.com/niyongsheng/AudioScript/issues/new/choose" target="_blank" rel="noopener noreferrer">
+                <a class="btn btn-outline btn-block" href="https://github.com/reknottycat/AudioScript-Windows/issues/new/choose" target="_blank" rel="noopener noreferrer">
                   <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56v-2.17c-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.68-1.28-1.68-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.23-1.28-5.23-5.68 0-1.25.45-2.28 1.19-3.08-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.79 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.08 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.68.8.56A11.52 11.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>
                   <span class="zh" lang="zh-CN">提交 Issue</span><span class="en" lang="en">Open an issue</span>
                 </a>
@@ -1245,9 +1247,9 @@
       <div class="container">
         <div class="footer-top">
           <div class="footer-brand">
-            <a class="brand" href="#top" aria-label="AudioScript 声稿">
+            <a class="brand" href="#top" aria-label="聆窗 LingWindow">
               <svg viewBox="68 -26 520 520" aria-hidden="true"><g transform="translate(16,-78) scale(0.609375)" fill="currentColor"><path d="M512 128a42.666667 42.666667 0 0 1 42.56 39.466667L554.666667 170.666667v682.666666a42.666667 42.666667 0 0 1-85.226667 3.2L469.333333 853.333333V170.666667a42.666667 42.666667 0 0 1 42.666667-42.666667z m192 128a42.666667 42.666667 0 0 1 42.56 39.466667L746.666667 298.666667v426.666666a42.666667 42.666667 0 0 1-85.226667 3.2L661.333333 725.333333V298.666667a42.666667 42.666667 0 0 1 42.666667-42.666667z m-384 0a42.666667 42.666667 0 0 1 42.56 39.466667L362.666667 298.666667v426.666666a42.666667 42.666667 0 0 1-85.226667 3.2L277.333333 725.333333V298.666667a42.666667 42.666667 0 0 1 42.666667-42.666667z M831.333 469.333H896a42.667 42.667 0 0 1 0 85.334H831.333a42.667 42.667 0 0 1 0-85.334zM128 384a42.666667 42.666667 0 0 1 42.56 39.466667L170.666667 426.666667v170.666666a42.666667 42.666667 0 0 1-85.226667 3.2L85.333333 597.333333v-170.666666a42.666667 42.666667 0 0 1 42.666667-42.666667z" /></g></svg>
-              <span>AudioScript</span>
+              <span>LingWindow</span>
               <span class="brand-cn zh" lang="zh-CN">声稿</span>
             </a>
             <p>
@@ -1256,19 +1258,19 @@
             </p>
           </div>
           <nav class="footer-links" aria-label="资源 / Resources">
-            <a href="https://github.com/niyongsheng/AudioScript" target="_blank" rel="noopener noreferrer">GitHub</a>
-            <a href="https://github.com/niyongsheng/AudioScript/releases/latest" target="_blank" rel="noopener noreferrer">Releases</a>
-            <a href="https://github.com/niyongsheng/AudioScript/blob/main/docs/SPEC.md" target="_blank" rel="noopener noreferrer">SPEC</a>
-            <a href="https://github.com/niyongsheng/AudioScript/blob/main/docs/DESIGN.md" target="_blank" rel="noopener noreferrer">DESIGN</a>
+            <a href="https://github.com/reknottycat/AudioScript-Windows" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <a href="https://github.com/reknottycat/AudioScript-Windows" target="_blank" rel="noopener noreferrer">Releases</a>
+            <a href="https://github.com/reknottycat/AudioScript-Windows/blob/main/docs/SPEC.md" target="_blank" rel="noopener noreferrer">SPEC</a>
+            <a href="https://github.com/reknottycat/AudioScript-Windows/blob/main/docs/DESIGN.md" target="_blank" rel="noopener noreferrer">DESIGN</a>
             <a href="https://ifdian.net/a/nico2026" target="_blank" rel="noopener noreferrer"><span class="zh" lang="zh-CN">爱发电</span><span class="en" lang="en">Afdian</span></a>
             <a href="https://x.com/niyongsheng" target="_blank" rel="noopener noreferrer">X</a>
             <a href="mailto:niyongsheng@Outlook.com">Email</a>
             <a href="#privacy"><span class="zh" lang="zh-CN">隐私</span><span class="en" lang="en">Privacy</span></a>
-            <a href="https://github.com/niyongsheng/AudioScript/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT</a>
+            <a href="https://github.com/reknottycat/AudioScript-Windows/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT</a>
           </nav>
         </div>
         <div class="footer-bottom">
-          <span>© 2026 Nico · AudioScript</span>
+          <span>© 2026 Nico · LingWindow</span>
           <span><span class="zh" lang="zh-CN">用 Tauri 2 与 Rust 构建</span><span class="en" lang="en">Built with Tauri 2 and Rust</span></span>
         </div>
       </div>
@@ -1281,17 +1283,17 @@
         const LANG_KEY = 'audioscript.site.lang'
         const RELEASE_KEY = 'audioscript.site.release'
         const RELEASE_TTL = 10 * 60 * 1000
-        const API = 'https://api.github.com/repos/niyongsheng/AudioScript/releases/latest'
+        const API = 'https://api.github.com/repos/reknottycat/AudioScript-Windows/releases/latest'
         const ASSETS = ['aarch64.dmg', 'x64-setup.exe', 'x64_en-US.msi', 'amd64.deb', 'amd64.AppImage']
         const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
         const META = {
           zh: {
-            title: 'AudioScript 声稿 — 离线实时转写与双语悬浮字幕',
-            desc: 'AudioScript 声稿是一款离线优先的实时转写与双语悬浮字幕桌面应用：监听电脑正在播放的声音，把外语播客、视频与会议实时变成原文与译文。识别与翻译都在本机完成，内置中英文模型，可选 29+ 种语言，支持 macOS、Windows、Linux。',
+            title: '聆窗 LingWindow — 离线实时转写与双语悬浮字幕',
+            desc: '聆窗 LingWindow是一款离线优先的实时转写与双语悬浮字幕桌面应用：监听电脑正在播放的声音，把外语播客、视频与会议实时变成原文与译文。识别与翻译都在本机完成，内置中英文模型，可选 29+ 种语言，支持 macOS、Windows、Linux。',
           },
           en: {
-            title: 'AudioScript — Offline real-time transcription and bilingual subtitles',
-            desc: 'AudioScript is an offline-first desktop app that turns whatever your computer is playing into live bilingual subtitles. Recognition and translation run entirely on your machine. Chinese and English models are built in, with 29+ languages available, on macOS, Windows, and Linux.',
+            title: 'LingWindow — Offline real-time transcription and bilingual subtitles',
+            desc: 'LingWindow is an offline-first desktop app that turns whatever your computer is playing into live bilingual subtitles. Recognition and translation run entirely on your machine. Chinese and English models are built in, with 29+ languages available, on macOS, Windows, and Linux.',
           },
         }
 
@@ -1306,7 +1308,7 @@
           try {
             fn()
           } catch (e) {
-            window.console?.warn?.('[AudioScript]', e)
+            window.console?.warn?.('[LingWindow]', e)
           }
         }
         let release = null
@@ -1314,7 +1316,7 @@
         function setMeta(l) {
           const meta = META[l]
           document.title = meta.title
-          const alt = l === 'en' ? 'AudioScript: offline real-time transcription with bilingual subtitles' : 'AudioScript 声稿：离线实时转写与双语悬浮字幕'
+          const alt = l === 'en' ? 'LingWindow: offline real-time transcription with bilingual subtitles' : '聆窗 LingWindow：离线实时转写与双语悬浮字幕'
           const pairs = [
             ['meta[name="description"]', meta.desc],
             ['meta[property="og:title"]', meta.title],

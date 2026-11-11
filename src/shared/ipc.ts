@@ -3,6 +3,9 @@ import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 import { t } from './i18n'
 import { withTimeout } from './timeout'
 import type {
+  AnalyticsTier,
+  AppRef,
+  AudioProcessInfo,
   AudioStatus,
   EndpointConfig,
   InputDevice,
@@ -35,6 +38,8 @@ import {
 } from './types'
 
 export type {
+  AppRef,
+  AudioProcessInfo,
   AudioStatus,
   InputDevice,
   MacSpeechStatus,
@@ -68,6 +73,7 @@ export const EVENT = {
   taskState: 'transcript://state',
   overlayState: 'overlay://state',
   overlayVisibility: 'overlay://visibility',
+  overlayShortcuts: 'overlay://shortcuts',
   audio: 'transcript://audio',
   level: 'transcript://level',
   languageMismatch: 'transcript://language-mismatch',
@@ -88,6 +94,7 @@ export interface AppInfo {
   arch: string
   osVersion?: string | null
   macSpeechSupported: boolean
+  analyticsTier: AnalyticsTier
   builtAtMs: number | null
 }
 
@@ -149,6 +156,7 @@ export interface SessionDevices {
   device?: string
   mixMicDeviceId?: string
   mixSystemDeviceId?: string
+  appTargets?: AppRef[]
 }
 
 export function sessionStart(
@@ -160,9 +168,10 @@ export function sessionStart(
   source: AudioSourceKind = AudioSourceKind.Loopback,
 ): Promise<TaskStatus> {
   return call<TaskStatus>('session_start', {
-    device: devices.device || null,
+    device: devices.appTargets?.length ? null : devices.device || null,
     mixMicDeviceId: devices.mixMicDeviceId || null,
     mixSystemDeviceId: devices.mixSystemDeviceId || null,
+    appTargets: devices.appTargets ?? [],
     source,
     config: { translate: { engine: translate, sourceLang, targetLang, zhScript } },
   })
@@ -180,20 +189,30 @@ export function audioDevices(source: AudioSourceKind = AudioSourceKind.Loopback)
   return call<InputDevice[]>('audio_devices', { source })
 }
 
+export function audioProcesses(): Promise<AudioProcessInfo[]> {
+  return call<AudioProcessInfo[]>('audio_processes')
+}
+
 export interface DeviceLevelEvent {
   source: AudioSourceKind
   device: string | null
+  apps: string[]
   rms: number
 }
 
 export interface MonitorTarget {
   source: AudioSourceKind
   device: string | null
+  apps?: AppRef[]
 }
 
 export function monitorStart(targets: MonitorTarget[]): Promise<null> {
   return call<null>('monitor_start', {
-    targets: targets.map((target) => ({ source: target.source, device: target.device || null })),
+    targets: targets.map((target) => ({
+      source: target.source,
+      device: target.device || null,
+      apps: target.apps ?? [],
+    })),
   })
 }
 
@@ -352,6 +371,16 @@ export function transcriptExport(stamp: string, path: string): Promise<{ path: s
 
 export function overlayToggle(): Promise<boolean> {
   return call<boolean>('overlay_toggle')
+}
+
+export function overlayHide(): Promise<void> {
+  return call<void>('overlay_hide')
+}
+
+export type OverlayConfigPatch = Partial<Omit<OverlayConfig, 'enable' | 'mode'>>
+
+export function overlayConfigPatch(patch: OverlayConfigPatch): Promise<OverlayConfig> {
+  return call<OverlayConfig>('overlay_config_patch', { patch })
 }
 
 export function overlaySetMode(mode: OverlayMode): Promise<OverlayMode> {

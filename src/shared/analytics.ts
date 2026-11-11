@@ -1,14 +1,12 @@
-import { trackEvent } from '@aptabase/tauri'
+import type { AnalyticsTier } from '@/shared/types'
 
 type Props = Record<string, string | number>
 
-let enabled = false
+// Compatibility API: legacy preferences cannot enable collection in LingWindow.
+export function setTrackingEnabled(_next: boolean) {}
 
-export function setTrackingEnabled(next: boolean) {
-  enabled = next
-}
+export function setTrackingTier(_next: AnalyticsTier) {}
 
-export function track(name: string, props?: Props) {
-  if (!enabled) return
-  trackEvent(name, props).catch(() => {})
-}
+export function track(_name: string, _props?: Props) {}
+
+export function syncTrackingFromPrefs() {}

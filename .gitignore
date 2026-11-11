@@ -32,7 +32,24 @@ pnpm-debug.log*
 .idea
 *.sw?
 
-# Local inference runtimes and verification data
+# Private local deployment material must never be published.
+*.safetensors
+*.gguf
+*.onnx
+*.venv/
+venv/
+runtimes/
+preferences.json
+runtime.json
+*.key
+*.pem
+*.p12
+*.wav
+*.mp3
+*.m4a
+*.mp4
+
+# Local Windows inference and validation material
 .venv*/
 __pycache__/
 *.pyc

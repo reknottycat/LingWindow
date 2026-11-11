@@ -1,6 +1,6 @@
-# HY-MT2 local build (AudioScript 0.6.2)
+# HY-MT2 local translation in LingWindow
 
-This local adaptation adds HY-MT2 1.8B MLX 4-bit as the default translation tier on Apple Silicon Macs. Existing saved model selections are preserved. OPUS-MT, NLLB and LMT remain available. This is a local build, not an upstream release.
+This local adaptation adds HY-MT2 1.8B MLX 4-bit as the default translation tier on Apple Silicon Macs. Existing saved model selections are preserved. OPUS-MT, NLLB and LMT remain available. LingWindow is an independently maintained derivative of AudioScript v0.7.0, not an official AudioScript release.
 
 ## Local installation
 
@@ -30,7 +30,7 @@ On the Models page, enter text under **Silent text test** and select **Test tran
 
 Run input-only tests with `python3 scripts/test-hymt2-worker.py`. To exercise the real model without audio, use the configured Python interpreter with `scripts/test-hymt2-worker.py --model /absolute/path/to/mt-hymt2`. The optional `--output /absolute/path/report.json` saves structured evidence. Rust module tests cover Unicode, transport repetition, timeout, malformed response, process early exit/reaping, truncated weights and transcript preservation. Existing queue tests cover close/drain/rejected pushes.
 
-For the full app build, run frontend type checking/build and Rust tests using the repository's normal toolchain. The local model adaptation only supplies Chinese and English new strings; other locales use the existing English fallback. Do not represent text-only verification as an audio end-to-end test.
+For the full app build, run frontend type checking/build and Rust tests using the repository's normal toolchain. Release localization covers all supported interface languages. Do not represent text-only verification as an audio end-to-end test.
 
 ## Reproducible M6 build notes
 
@@ -38,10 +38,6 @@ The verified local toolchain is Rust/Cargo 1.90.0, CMake 4.4.4, pnpm 10.29.2 and
 
 The current macOS 27.2 linker produced an invalid LINKEDIT string-pool alignment when stripping a build-time Tauri macro library. Setting Cargo `profile.release.build-override.strip="none"` for this build resolved the issue. No system security setting, deployed binary, or third-party source was patched to work around it. The final application uses a local ad-hoc development signature, not Developer ID notarization.
 
-Frontend generation/type checking/production build passed. Release library tests with the final deployment target 14.2, custom-protocol feature and build-override setting passed: 271 passed, 0 failed, 3 existing opt-in real-model tests ignored. The packaged app passed `codesign --verify --deep --strict`.
+Model assets and the private runtime belong in application data, not in the Git repository. Do not use a Documents symlink as the deployed model location: sandbox and privacy access can differ between terminal and packaged app. Preserve existing data during migration and verify cloned model hashes before use.
 
-On 2026-11-09 the installed application was switched to HY-MT2 through its UI. A restart at 14:36:11 UTC verified the saved HY-MT2 tier, Russian to simplified Chinese, Nemotron ASR, and disabled analytics. Five silent tests reused existing ASR text without playback, capture, or ASR. Cold text-to-event/render-ack latency was 2664/2702 ms; four warm tests were 212–325/239–356 ms. The Chinese text was visible in the main window, and the real floating frontend acknowledged frames. Independent visual confirmation of the floating panel remains pending. These are not speech end-to-end measurements. Detailed local evidence is in the parent workspace silent-overlay-verification.json and silent-overlay-evidence.log.
-
-Store real model assets and the private runtime in the application data folder rather than symlinking into Documents. On this machine, app model discovery stalled opening the Documents-linked config even though terminal reads worked. APFS-cloning the verified model and runtime into application data resolved startup without granting broader file access. Original models and the original application are preserved.
-
-The model license is Apache-2.0. A display-label correction has passed the same 271 release tests and packaging; its final deployment is pending manual Mac unlock. No security settings were changed.
+See the release notes for checks actually run on a particular build. Text-only verification is not speech end-to-end verification. The application is locally ad-hoc signed, not Developer ID notarized.

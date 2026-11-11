@@ -129,7 +129,7 @@ type EngineType = "local-streaming"   // sherpa-onnx 流式（默认）
                 | "mac-native"        // macOS 26+ 系统语音
                 | "remote-api"        // V0.2
 
-type AudioSource = "mic" | "loopback" | "mix"
+type AudioSource = "mic" | "loopback" | "mix" | "app"
 
 interface EndpointConfig {          // 不自研 VAD，直接映射引擎端点检测
   trailingSilenceMs: number
@@ -225,6 +225,7 @@ V0.1 只有内存中的当前会话：`SessionInfo { status, device?, deviceSamp
 interface OverlayConfig {
   enable: boolean                // 默认 true：启动即显示，改动落盘
   mode: "locked" | "edit"        // 默认 "edit"，改动落盘
+  displayMode: "source" | "bilingual" | "translation" // 旧配置默认双语，改动落盘
   alwaysOnTop: boolean           // macOS 上不被采纳，见 §8
   opacity: number                // 0 ~ 100，只作用于背景
   fontSize: number
@@ -365,6 +366,7 @@ pub trait Translator: Send {
 | 音源 | 状态 | 后端 |
 |---|---|---|
 | **系统声音输出（回环）** | ✅ | macOS: Core Audio Process Tap ／ Windows: WASAPI loopback |
+| **应用声音（指定应用）** | ✅ | macOS: Core Audio Process Tap ／ Windows: WASAPI process loopback ／ Linux: PipeWire 应用输出节点 |
 | 麦克风 | ✅ | 同上 |
 | 麦克风 + 系统声混流 | ✅ | 库内完成混音 |
 | 音频文件 | V0.2 | 批量转写走离线引擎 |
@@ -400,9 +402,19 @@ TranscriptStore ← 状态机在此
    - 「麦克风 + 系统声音」下 MUST 提供两个独立选择器，分别写入 `mixMicDeviceId` / `mixSystemDeviceId`，MUST NOT 复用单设备 `deviceId`——flexaudio 对 Mix 会忽略它。
 2. **MUST 有音频心跳**：每 5 秒统计最近窗口的 RMS，`rms < 1e-4`（约 -80 dBFS）判为静音并记 **WARN**，日志文案 MUST 明确写出「电平接近零」。阈值刻意留低：宁可漏报，也不要把很安静的房间误报成故障。
 3. **静音状态变化时 MUST 广播**（`transcript://audio`）。只在状态变化时播报，每 5 秒弹一次会变成骚扰。
-4. **电平表心跳**：会话采集中 MUST 广播 `transcript://level`（裸 RMS，200ms）；「音频」设置页打开期间广播 `transcript://device-level`（`{ source, device, rms }`，200ms，`device` 为 `null` 表示系统默认）。
-   - 预览 MUST 在进入页面时开始，音源或设备变化时重启，离开页面 / 开始转写 / 主窗口隐藏时停止，MUST NOT 后台常驻。
-   - 预览目标以 `(source, device)` 唯一标识；Mix 下 MUST 同时覆盖两侧。任一下拉展开期间 MUST 额外预览该侧全部设备。
+4. **电平表心跳**：会话采集中 MUST 广播 `transcript://level`（裸 RMS，200ms）；「音频」设置页打开期间广播 `transcript://device-level`（`{ source, device, app, rms }`，200ms，`device` 为 `null` 表示系统默认，`app` 为 `null` 表示全部应用）。
+   - 预览 MUST 在进入页面时开始，音源、设备或应用变化时重启，离开页面 / 开始转写 / 主窗口隐藏时停止，MUST NOT 后台常驻。
+   - 预览目标以 `(source, device, app)` 唯一标识；Mix 下 MUST 同时覆盖两侧。任一下拉展开期间 MUST 额外预览该侧全部设备。
+5. **MUST 提供独立的「应用声音」音源**。
+   - 「音源」MUST 与「系统声音」并列提供「应用声音」；MUST NOT 把应用选择做成「系统声音」的子选项。
+   - 应用声音 MUST 要求选择目标应用；未选择时 MUST NOT 开始会话。
+   - 应用声音 MUST 支持同时选择 1–4 个应用；多路 MUST 在应用层混音成一路，MUST NOT 依赖单路进程回环支持多目标。
+   - 应用选择 MUST 默认只列当前正在输出声音的应用，并 MUST 提供「显示全部应用」入口；系统 daemon / helper MUST NOT 作为可选项。
+   - 应用选择 MUST 持久化稳定身份（macOS bundle id；其他平台可执行文件名），MUST NOT 持久化 PID。
+   - 会话启动 MUST 用当前进程列表重新解析目标；目标不存在或系统不支持时 MUST 报错并提示重新选择，MUST NOT 静默回退到系统声音。
+   - 应用声音 MUST NOT 提供输出设备选择：Windows / Linux 的进程回环不支持按设备限定。
+   - 「麦克风 + 系统声音」MUST NOT 提供按应用采集：flexaudio 的 Mix 不支持进程目标。
+   - 平台门槛：macOS 14.4+、Windows build 20348+、Linux PipeWire；不满足时应用选择 MUST 为空并说明原因，不允许开始。
    - 预览与转写 MUST NOT 同时持有采集设备：转写前 MUST 先停预览，失败或结束后按页面状态恢复。
    - 它与静音判定 MUST NOT 共用累加窗口：判定要 5 秒均值，表要 200ms 快照。
    - **没有「归零」事件**——广播停止时 UI MUST 自己把表清零。
@@ -437,6 +449,8 @@ V0.1 只实现 `ready | capturing | error`，任一步失败进入 `error`（`tr
 
 独立的轻量 WebView 产物（`overlay.html` → `src/overlay/`），配置见 §4.5。
 
+- **工具栏**固定占用 40px，不覆盖字幕正文：编辑态提供显式拖动手柄、原文 / 双语 / 译文、锁定与 ×。× 使用幂等隐藏命令，不停止转写。原文模式使用完整字号；译文模式在等待或失败时显示状态。主窗口共享同一显示模式，外观变更采用字段补丁，不覆盖其他窗口刚更新的配置。
+- **锁定提示**显示当前已注册的解锁快捷键；改绑时同步更新。未注册解锁键时浮窗锁定按钮不可用，仍可在主窗口 / 托盘控制。锁定态不显示无法点击的按钮。
 - **编辑态**（默认）才可拖拽 / 缩放 / 选中文字；**锁定态** MUST 完全点击穿透。热键与托盘 MUST 都能切换两态。
 - **可见性与模式 MUST 落盘**：托盘 / 热键 / 主窗口三条路径都会写回 `enable` 与 `mode`。启动时按 `enable` 决定是否显示（窗口 spec 里是 `visible: false`）。
 - **逃生路径 MUST 完整**：穿透一旦开启，切换入口必须存在于窗口系统之外（托盘 / 全局热键）。热键注册失败 MUST 可见（日志 + 托盘提示）。
@@ -516,8 +530,6 @@ Remote API 密钥 MUST 存入系统密钥链（Keychain / Credential Manager / S
 - 初始化 / 注册 / 路径解析类失败 MUST 写日志，MUST NOT 被静默吞掉。
 - 用户能感知的失败 MUST 同时出现在界面上并给出下一步动作。
 - 资源路径解析（dev 与打包后不同）MUST 能从日志一眼看出走的是哪条分支。
-- 每次启动 MUST 记录版本、OS、CPU/内存、WebView 版本与当前配置（音源 / 模型档位 / 语言），用户回传单个日志文件即可定位环境差异。
-- Rust 线程 panic MUST 写入日志文件——GUI 进程的 stderr 用户看不到。
 
 ### 11.2 已知风险
 
@@ -542,16 +554,12 @@ Remote API 密钥 MUST 存入系统密钥链（Keychain / Credential Manager / S
 
 ---
 
-## 12. 匿名使用统计
+## 12. 隐私与更新隔离
 
-统计默认开启，可在「通用 → 隐私 → 匿名使用统计」关闭；关闭后 Rust 与前端都 MUST NOT 再入队新事件。
+聆窗 LingWindow 不初始化 Aptabase 或 Sentry，也不采集前端错误。`analyticsEnabled` 在默认值、偏好解析、迁移和修改时固定为 `false`。旧配置中的 `true` 不能重新启用收集。运行诊断仅写入本地日志。音频页不得因挂载或聚焦自动采集，音量预览必须由用户明确点击启动；切换音源或离页即停止。正式构建不得通过旧环境变量自动开始转写。
 
-- 事件：`app_started` / `app_exited`、`session_started` / `session_stopped` / `session_start_failed` / `first_transcript`、`model_download`、`overlay_toggled`、`setting_changed`、`onboarding_completed`、`permission_result` / `permission_settings_opened`、`update_checked` / `update_prompt` / `update_install`。
-- `model_download` 记录 `phase`、`error_code`、`http_status`；`session_stopped` 记录停止来源、音源、模型档位与是否出字；`first_transcript` 使用延迟分档；退出事件记录原因、运行时长分档与是否仍在转写。
-- 属性只允许枚举值与分档（音源、翻译引擎、源语言、模型档位、时长分档、结果状态、错误码）。
-- MUST NOT 包含转写文本、设备名称或 ID、文件路径、错误原文。
-- 传输由 `tauri-plugin-aptabase` 完成；上报在后台线程，MUST NOT 阻塞启动、转写或退出。
+本分支使用独立的 `com.lingwindow.desktop` 应用标识；不得自动安装 AudioScript 上游更新。更新仅从本项目发布页手动获取。原应用和数据在迁移时必须保留，模型、运行时、日志及个人设置不得提交到源码仓库。
 
 ## 本地构建附录：HY-MT2
 
-此 0.6.2 本地适配新增 Apple Silicon 默认 HY-MT2 档位，仅支持英语/俄语译为中文。后端使用本地 MLX 私有进程，不提供模型在线下载。无声验收复用真实翻译队列与浮窗事件，不能视为语音端到端验证。实现约束、安装和验收见 [HYMT2-LOCAL.md](HYMT2-LOCAL.md)。
+此本地适配新增 Apple Silicon 默认 HY-MT2 档位，仅支持英语/俄语译为中文。后端使用本地 MLX 私有进程，不提供模型在线下载。无声验收复用真实翻译队列与浮窗事件，不能视为语音端到端验证。实现约束、安装和验收见 [HYMT2-LOCAL.md](HYMT2-LOCAL.md)。

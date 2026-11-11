@@ -1,6 +1,48 @@
 import type { Messages } from './zh-CN'
 
 export const it: Partial<Messages> = {
+  'audio.previewControlTitle': 'Anteprima del livello audio',
+  'audio.previewExplicitHint':
+    'Il livello della sorgente selezionata viene acquisito solo dopo aver fatto clic su Avvia. Il riconoscimento vocale non viene eseguito. Cambiare sorgente o lasciare questa pagina interrompe l’anteprima.',
+  'audio.previewStart': 'Avvia anteprima del livello',
+  'audio.previewStop': 'Interrompi anteprima del livello',
+  'models.modelMtHymt2Title': 'HY-MT2 1.8B',
+  'models.hymt2Directions': 'Inglese / russo → cinese',
+  'models.manualInstall': 'Installa localmente il modello e l’ambiente Python; nessun download nell’app',
+  'models.statusManual': 'Configurazione locale necessaria',
+  'models.previewTitle': 'Test di testo senza audio',
+  'models.previewBody':
+    'Prova il traduttore attuale e la vera finestra dei sottotitoli senza registrazione, riproduzione o riconoscimento vocale. I segmenti di prova etichettati restano nella trascrizione. Il tempo include il primo caricamento del modello, non la latenza audio complessiva.',
+  'models.previewInput': 'Inserisci il testo originale (massimo 2000 caratteri)',
+  'models.previewButton': 'Prova traduzione e sottotitoli',
+  'models.previewWorking': 'Traduzione…',
+  'models.previewResult': 'Evento di traduzione inviato in {ms} ms. Controlla visivamente i sottotitoli.',
+  'translate.directionSubtitleHymt2':
+    'Versione locale HY-MT2: solo dall’inglese o dal russo al cinese. L’audio russo richiede un modello di riconoscimento compatibile con il russo.',
+  'overlay.displayMode': 'Visualizzazione sottotitoli',
+  'overlay.displayModeDescription': 'Cambia solo la visualizzazione; trascrizione e traduzione continuano.',
+  'overlay.displaySource': 'Originale',
+  'overlay.displayBilingual': 'Entrambi',
+  'overlay.displayTranslation': 'Traduzione',
+  'overlay.controlsHelp':
+    'Trascina la maniglia superiore per spostare. × nasconde solo i sottotitoli, senza interrompere la trascrizione. Puoi mostrarli o sbloccarli qui o dalla barra dei menu.',
+  'overlayWindow.drag': 'Sposta',
+  'overlayWindow.hide': 'Nascondi sottotitoli (la trascrizione continua)',
+  'overlayWindow.hideShortcut': 'Nascondi sottotitoli (la trascrizione continua). Mostra: {shortcut}',
+  'overlayWindow.lock': 'Blocca · i clic attraversano la finestra. Sblocca: {shortcut}',
+  'overlayWindow.lockUnavailable':
+    'Configura una scorciatoia di sblocco funzionante nelle impostazioni dei sottotitoli prima di bloccare qui.',
+  'overlayWindow.locked': 'Bloccato · {shortcut} per sbloccare',
+  'overlayWindow.recover': 'Sblocca nella finestra principale → Sottotitoli',
+  'overlayWindow.translationPending': 'Traduzione…',
+  'overlayWindow.translationWaiting': 'In attesa di traduzione…',
+  'overlayWindow.translationUnavailable': 'Nessuna traduzione per questo segmento',
+  'about.upstreamCreditTitle': 'Basato su AudioScript',
+  'about.upstreamCreditBody':
+    'Grazie a Nico (niyongsheng) per aver reso AudioScript open source. Questo derivato si basa sulla v0.7.0 e mantiene la licenza MIT e il copyright originale.',
+  'about.manualDistribution':
+    'Gli aggiornamenti automatici sono disattivati; scaricali manualmente dalla pagina delle versioni di LingWindow.',
+  'about.forkName': '聆窗 LingWindow',
   'common.cancel': 'Annulla',
   'common.close': 'Chiudi',
   'common.retry': 'Riprova',
@@ -57,7 +99,7 @@ export const it: Partial<Messages> = {
   'language.id': 'Bahasa Indonesia',
   'language.ar': 'العربية',
 
-  'app.windowTitle': 'AudioScript',
+  'app.windowTitle': 'LingWindow',
   'app.updateAvailable': 'Versione v{version} disponibile',
   'app.updateNow': 'Aggiorna ora',
   'app.updateIgnore': 'Ignora',
@@ -114,6 +156,11 @@ export const it: Partial<Messages> = {
   'whatsNew.multichannelMicTitle': 'Microfoni multicanale su Windows',
   'whatsNew.multichannelMicBody':
     'Array come Intel Smart Sound ora vengono acquisiti e mixati correttamente invece di fallire all’avvio.',
+  'whatsNew.appAudioTitle': 'Cattura l’audio di un’app',
+  'whatsNew.appAudioBody': 'Scegli fino a quattro app (browser, riunioni…) e trascrivi solo il loro audio.',
+  'whatsNew.crashReportsTitle': 'Privacy fin dalla progettazione',
+  'whatsNew.crashReportsBody':
+    'Aptabase, Sentry e la raccolta dati dell’interfaccia sono disattivati in questa versione.',
   'whatsNew.viewNotes': 'Vedi le note di rilascio complete',
   'whatsNew.continue': 'Continua',
 
@@ -121,19 +168,35 @@ export const it: Partial<Messages> = {
   'transcribe.emptyCapturing': 'Riconoscimento…',
   'transcribe.emptyIdle': 'Fai clic su “Avvia trascrizione” in alto a sinistra.',
   'transcribe.keepHint': 'Il contenuto resta dopo l’arresto finché non lo cancelli o chiudi l’app.',
-  'transcribe.exportFileName': 'AudioScript-trascrizione-{stamp}.md',
+  'transcribe.exportFileName': 'LingWindow-trascrizione-{stamp}.md',
 
   'audio.title': 'Audio',
   'audio.sourceSection': 'Sorgente audio',
   'audio.sourceLoopbackLabel': 'Audio di sistema',
-  'audio.sourceLoopbackDescription':
-    'Trascrive l’audio riprodotto dal player. Richiede l’autorizzazione Registrazione schermo e audio di sistema.',
+  'audio.sourceLoopbackDescription': 'Trascrive l’audio riprodotto dal player.',
+  'audio.sourceAppLabel': 'Audio di un’app',
+  'audio.sourceAppDescription': 'Trascrive solo l’uscita delle app selezionate.',
   'audio.sourceMicLabel': 'Microfono',
   'audio.sourceMicDescription': 'Trascrive solo l’ingresso del microfono; l’audio del player non viene toccato.',
   'audio.sourceMixLabel': 'Microfono + audio di sistema',
   'audio.sourceMixDescription': 'Cattura entrambi insieme: l’interlocutore e te. Adatto alle riunioni.',
   'audio.sourceHint': 'Cambiando la sorgente l’elenco dei dispositivi viene aggiornato.',
   'audio.inputDevice': 'Dispositivo di ingresso',
+  'audio.appSection': 'App',
+  'audio.app': 'App',
+  'audio.appSelectPlaceholder': 'Scegli un’app',
+  'audio.appHint': 'Cattura fino a 4 sorgenti audio di app.',
+  'audio.appPickHint': 'Scegli fino a 4 app da catturare insieme.',
+  'audio.appRequired': 'Scegli un’app da catturare',
+  'audio.appLoading': 'Ricerca di app con uscita audio…',
+  'audio.appEmpty': 'Nessuna app con uscita audio. Avvia la riproduzione e aggiorna.',
+  'audio.appPlaying': 'In riproduzione',
+  'audio.appNotRunning': 'Non in esecuzione',
+  'audio.appIdle': 'Nessuna riproduzione',
+  'audio.appShowAll': 'Mostra tutte le app',
+  'audio.appOnlyPlaying': 'Mostra solo quelle in riproduzione',
+  'audio.appShowAllHint': 'Includi app che non emettono audio',
+  'audio.appNoPlaying': 'Nessuna app in riproduzione. Espandi «Mostra tutte le app».',
   'audio.micDevice': 'Dispositivo microfono',
   'audio.systemDevice': 'Dispositivo audio di sistema',
   'audio.deviceSpec': '{channels} can. · {rate}',
@@ -146,6 +209,8 @@ export const it: Partial<Messages> = {
   'audio.previewFailed': 'Impossibile visualizzare l’anteprima del livello di ingresso',
   'audio.captureHint': 'Le modifiche ai dispositivi durante la cattura valgono dalla sessione successiva.',
   'audio.silenceTitle': 'Nessun audio rilevato (livello ≈ 0)',
+  'audio.silenceCheckApp':
+    'Verifica che «{app}» stia riproducendo audio; un’app silenziosa non ha flussi audio da catturare.',
   'audio.silenceCheckPlayer':
     'Assicurati che il player stia emettendo audio e che il volume di sistema non sia a zero.',
   'audio.silenceCheckPermission': 'Controlla l’autorizzazione macOS Registrazione schermo e audio di sistema.',
@@ -169,7 +234,7 @@ export const it: Partial<Messages> = {
   'permissions.speechDescNotDetermined':
     'Non ancora autorizzato; macOS chiede all’avvio della trascrizione, oppure richiedilo ora.',
   'permissions.speechDescDenied':
-    'Negato. Consenti ad AudioScript di usare il riconoscimento vocale nelle Impostazioni di Sistema.',
+    'Negato. Consenti ad LingWindow di usare il riconoscimento vocale nelle Impostazioni di Sistema.',
   'permissions.speechAssets': 'Risorse linguistiche di sistema installate: {count}.',
   'permissions.speechAuthorized': 'Autorizzato',
   'permissions.speechNotDetermined': 'Non autorizzato',
@@ -309,10 +374,9 @@ export const it: Partial<Messages> = {
   'general.autostart': 'Apri all’accesso',
   'general.autostartDescription': 'L’app resta nel vassoio dopo aver chiuso la finestra principale.',
   'general.privacy': 'Privacy',
-  'general.privacyFooter':
-    'Le statistiche includono solo nomi di eventi e alcune proprietà enumerate; mai testo trascritto, nomi di dispositivi o percorsi di file.',
   'general.analytics': 'Statistiche d’uso anonime',
-  'general.analyticsDescription': 'Invia l’uso delle funzionalità tramite Aptabase per migliorare AudioScript.',
+  'general.analyticsDescription':
+    'Questa versione non raccoglie statistiche d’uso e non carica segnalazioni di errore.',
   'general.diagnostics': 'Diagnostica',
   'general.exportLogs': 'Esporta log',
   'general.exportLogsDescription': 'Li copia sul desktop con un nome datato, poi apre la cartella.',
@@ -408,8 +472,8 @@ export const it: Partial<Messages> = {
   'about.platform': 'Piattaforma',
   'about.website': 'Sito web',
   'about.support': 'Sostieni lo sviluppo',
-  'about.sponsor': 'Sostieni',
-  'about.sponsorDescription': 'Se AudioScript ti è utile, puoi sostenere lo sviluppo futuro su Afdian.',
+  'about.sponsor': 'Sostieni l’autore originale',
+  'about.sponsorDescription': 'Sostieni Nico, creatore del progetto originale AudioScript, su Afdian.',
   'about.afdian': 'Afdian',
   'about.licensesGroup': 'Licenze open source',
   'about.modelsLicenses': 'Modelli e licenze',

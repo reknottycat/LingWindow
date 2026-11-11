@@ -209,76 +209,245 @@ pub fn tr(key: Key) -> &'static str {
 }
 
 messages! {
+    UpdateDistributionUnavailable {
+        zh_cn: "此版本尚未配置聆窗签名更新渠道，请从聆窗发布页手动下载。",
+        en: "This build has no signed LingWindow update channel. Download updates manually from the LingWindow releases page.",
+        zh_tw: "此版本尚未設定聆窗簽署更新管道，請從聆窗發布頁手動下載。",
+        ja: "このビルドには署名付きの LingWindow 更新チャネルがありません。LingWindow のリリースページから手動でダウンロードしてください。",
+        ko: "이 빌드에는 서명된 LingWindow 업데이트 채널이 없습니다. LingWindow 릴리스 페이지에서 직접 다운로드하세요.",
+        fr: "Cette version ne dispose pas de canal de mise à jour signé pour LingWindow. Téléchargez les mises à jour manuellement depuis la page des versions de LingWindow.",
+        de: "Dieser Build hat keinen signierten LingWindow-Updatekanal. Laden Sie Updates manuell von der LingWindow-Releaseseite herunter.",
+        es: "Esta compilación no tiene un canal de actualizaciones firmadas de LingWindow. Descargue las actualizaciones manualmente desde la página de versiones de LingWindow.",
+        pt_br: "Esta versão não tem um canal de atualizações assinadas do LingWindow. Baixe as atualizações manualmente na página de versões do LingWindow.",
+        ru: "В этой сборке не настроен канал подписанных обновлений LingWindow. Скачивайте обновления вручную со страницы выпусков LingWindow.",
+        it: "Questa build non ha un canale di aggiornamenti firmati di LingWindow. Scarica gli aggiornamenti manualmente dalla pagina delle versioni di LingWindow.",
+        id: "Build ini tidak memiliki saluran pembaruan LingWindow bertanda tangan. Unduh pembaruan secara manual dari halaman rilis LingWindow.",
+        ar: "لا تتضمن هذه النسخة قناة تحديثات موقّعة لـ LingWindow. نزّل التحديثات يدويًا من صفحة إصدارات LingWindow."
+    },
     ModelMtHymt2Title {
-        zh_cn: "HY-MT2 1.8B · Local",
-        en: "HY-MT2 1.8B · Local"
+        zh_cn: "HY-MT2 1.8B",
+        en: "HY-MT2 1.8B",
+        zh_tw: "HY-MT2 1.8B",
+        ja: "HY-MT2 1.8B",
+        ko: "HY-MT2 1.8B",
+        fr: "HY-MT2 1.8B",
+        de: "HY-MT2 1.8B",
+        es: "HY-MT2 1.8B",
+        pt_br: "HY-MT2 1.8B",
+        ru: "HY-MT2 1.8B",
+        it: "HY-MT2 1.8B",
+        id: "HY-MT2 1.8B",
+        ar: "HY-MT2 1.8B"
     },
     HymtRuntimeInvalid {
         zh_cn: "runtime.json 必须指定存在且可执行的 Python 绝对路径。",
-        en: "runtime.json must name an existing executable Python absolute path."
+        en: "runtime.json must name an existing executable Python absolute path.",
+        zh_tw: "runtime.json 必須指定存在且可執行的 Python 絕對路徑。",
+        ja: "runtime.json には、存在する実行可能な Python の絶対パスを指定する必要があります。",
+        ko: "runtime.json에는 실제로 존재하며 실행 가능한 Python의 절대 경로를 지정해야 합니다.",
+        fr: "runtime.json doit indiquer le chemin absolu d’un exécutable Python existant.",
+        de: "runtime.json muss den absoluten Pfad zu einer vorhandenen, ausführbaren Python-Datei angeben.",
+        es: "runtime.json debe indicar la ruta absoluta de un ejecutable de Python existente.",
+        pt_br: "runtime.json deve indicar o caminho absoluto de um executável Python existente.",
+        ru: "В runtime.json необходимо указать абсолютный путь к существующему исполняемому файлу Python.",
+        it: "runtime.json deve indicare il percorso assoluto di un eseguibile Python esistente.",
+        id: "runtime.json harus menentukan jalur absolut ke berkas Python yang ada dan dapat dieksekusi.",
+        ar: "يجب أن يحدد runtime.json مسارًا مطلقًا لملف Python موجود وقابل للتنفيذ."
     },
     HymtPlatform {
-        zh_cn: "HY-MT2 支持 Windows CUDA 或 Apple Silicon MLX。",
-        en: "HY-MT2 requires Windows CUDA or Apple Silicon MLX."
+        zh_cn: "HY-MT2 需要 Apple Silicon Mac，或配有 NVIDIA CUDA 的 Windows 电脑。",
+        en: "HY-MT2 requires an Apple Silicon Mac or a Windows PC with NVIDIA CUDA.",
+        zh_tw: "HY-MT2 需要 Apple Silicon Mac，或配備 NVIDIA CUDA 的 Windows 電腦。",
+        ja: "HY-MT2 には Apple Silicon Mac または NVIDIA CUDA 対応の Windows PC が必要です。",
+        ko: "HY-MT2에는 Apple Silicon Mac 또는 NVIDIA CUDA를 지원하는 Windows PC가 필요합니다.",
+        fr: "HY-MT2 nécessite un Mac Apple Silicon ou un PC Windows avec NVIDIA CUDA.",
+        de: "HY-MT2 erfordert einen Apple-Silicon-Mac oder einen Windows-PC mit NVIDIA CUDA.",
+        es: "HY-MT2 requiere un Mac con Apple Silicon o un PC Windows con NVIDIA CUDA.",
+        pt_br: "O HY-MT2 requer um Mac com Apple Silicon ou um PC Windows com NVIDIA CUDA.",
+        ru: "Для HY-MT2 требуется Mac с Apple Silicon или компьютер Windows с NVIDIA CUDA.",
+        it: "HY-MT2 richiede un Mac Apple Silicon o un PC Windows con NVIDIA CUDA.",
+        id: "HY-MT2 memerlukan Mac Apple Silicon atau PC Windows dengan NVIDIA CUDA.",
+        ar: "يتطلب HY-MT2 جهاز Mac بمعالج Apple Silicon أو حاسوب Windows يدعم NVIDIA CUDA."
     },
     HymtWorkerRestart {
         zh_cn: "HY-MT2 工作进程不可用，请重新选择模型或重启应用。",
-        en: "HY-MT2 worker is unavailable. Reselect the model or restart the app."
+        en: "HY-MT2 worker is unavailable. Reselect the model or restart the app.",
+        zh_tw: "HY-MT2 工作程序無法使用，請重新選擇模型或重新啟動應用程式。",
+        ja: "HY-MT2 ワーカープロセスを利用できません。モデルを選び直すか、アプリを再起動してください。",
+        ko: "HY-MT2 작업 프로세스를 사용할 수 없습니다. 모델을 다시 선택하거나 앱을 다시 시작하세요.",
+        fr: "Le processus HY-MT2 est indisponible. Sélectionnez à nouveau le modèle ou redémarrez l’application.",
+        de: "Der HY-MT2-Arbeitsprozess ist nicht verfügbar. Wählen Sie das Modell erneut aus oder starten Sie die App neu.",
+        es: "El proceso de trabajo de HY-MT2 no está disponible. Vuelva a seleccionar el modelo o reinicie la aplicación.",
+        pt_br: "O processo de trabalho do HY-MT2 está indisponível. Selecione o modelo novamente ou reinicie o aplicativo.",
+        ru: "Рабочий процесс HY-MT2 недоступен. Выберите модель заново или перезапустите приложение.",
+        it: "Il processo di lavoro HY-MT2 non è disponibile. Seleziona nuovamente il modello o riavvia l’app.",
+        id: "Proses pekerja HY-MT2 tidak tersedia. Pilih ulang model atau mulai ulang aplikasi.",
+        ar: "عملية HY-MT2 غير متاحة. أعد اختيار النموذج أو أعد تشغيل التطبيق."
     },
     HymtProtocol {
         zh_cn: "HY-MT2 工作进程返回了无效响应。",
-        en: "HY-MT2 worker returned an invalid response."
+        en: "HY-MT2 worker returned an invalid response.",
+        zh_tw: "HY-MT2 工作程序傳回了無效回應。",
+        ja: "HY-MT2 ワーカープロセスが無効な応答を返しました。",
+        ko: "HY-MT2 작업 프로세스가 잘못된 응답을 반환했습니다.",
+        fr: "Le processus HY-MT2 a renvoyé une réponse invalide.",
+        de: "Der HY-MT2-Arbeitsprozess hat eine ungültige Antwort zurückgegeben.",
+        es: "El proceso de trabajo de HY-MT2 devolvió una respuesta no válida.",
+        pt_br: "O processo de trabalho do HY-MT2 retornou uma resposta inválida.",
+        ru: "Рабочий процесс HY-MT2 вернул некорректный ответ.",
+        it: "Il processo di lavoro HY-MT2 ha restituito una risposta non valida.",
+        id: "Proses pekerja HY-MT2 mengembalikan respons yang tidak valid.",
+        ar: "أعادت عملية HY-MT2 استجابة غير صالحة."
     },
     HymtTimeout {
         zh_cn: "HY-MT2 本地翻译超时，工作进程已停止。",
-        en: "HY-MT2 local translation timed out. The worker has been stopped."
+        en: "HY-MT2 local translation timed out. The worker has been stopped.",
+        zh_tw: "HY-MT2 本機翻譯逾時，工作程序已停止。",
+        ja: "HY-MT2 のローカル翻訳がタイムアウトしたため、ワーカープロセスを停止しました。",
+        ko: "HY-MT2 로컬 번역 시간이 초과되어 작업 프로세스를 중지했습니다.",
+        fr: "La traduction locale HY-MT2 a dépassé le délai imparti. Le processus a été arrêté.",
+        de: "Zeitüberschreitung bei der lokalen HY-MT2-Übersetzung. Der Arbeitsprozess wurde angehalten.",
+        es: "La traducción local de HY-MT2 superó el tiempo de espera. El proceso de trabajo se ha detenido.",
+        pt_br: "A tradução local do HY-MT2 excedeu o tempo limite. O processo de trabalho foi interrompido.",
+        ru: "Время ожидания локального перевода HY-MT2 истекло. Рабочий процесс остановлен.",
+        it: "La traduzione locale HY-MT2 ha superato il tempo limite. Il processo di lavoro è stato arrestato.",
+        id: "Penerjemahan lokal HY-MT2 melewati batas waktu. Proses pekerja telah dihentikan.",
+        ar: "انتهت مهلة الترجمة المحلية بواسطة HY-MT2. تم إيقاف العملية."
     },
     HymtWorkerExited {
         zh_cn: "HY-MT2 工作进程意外退出。",
-        en: "HY-MT2 worker exited unexpectedly."
+        en: "HY-MT2 worker exited unexpectedly.",
+        zh_tw: "HY-MT2 工作程序意外結束。",
+        ja: "HY-MT2 ワーカープロセスが予期せず終了しました。",
+        ko: "HY-MT2 작업 프로세스가 예기치 않게 종료되었습니다.",
+        fr: "Le processus HY-MT2 s’est arrêté de manière inattendue.",
+        de: "Der HY-MT2-Arbeitsprozess wurde unerwartet beendet.",
+        es: "El proceso de trabajo de HY-MT2 finalizó inesperadamente.",
+        pt_br: "O processo de trabalho do HY-MT2 foi encerrado inesperadamente.",
+        ru: "Рабочий процесс HY-MT2 неожиданно завершился.",
+        it: "Il processo di lavoro HY-MT2 è terminato in modo imprevisto.",
+        id: "Proses pekerja HY-MT2 berhenti secara tak terduga.",
+        ar: "توقفت عملية HY-MT2 بشكل غير متوقع."
     },
     HymtWorkerError {
         zh_cn: "HY-MT2：{0}",
-        en: "HY-MT2: {0}"
+        en: "HY-MT2: {0}",
+        zh_tw: "HY-MT2：{0}",
+        ja: "HY-MT2: {0}",
+        ko: "HY-MT2: {0}",
+        fr: "HY-MT2 : {0}",
+        de: "HY-MT2: {0}",
+        es: "HY-MT2: {0}",
+        pt_br: "HY-MT2: {0}",
+        ru: "HY-MT2: {0}",
+        it: "HY-MT2: {0}",
+        id: "HY-MT2: {0}",
+        ar: "HY-MT2: {0}"
     },
     PreviewInvalidText {
         zh_cn: "请输入 1 至 2000 个字符，不可包含空字符。",
-        en: "Enter 1–2000 characters without NUL characters."
+        en: "Enter 1–2000 characters without NUL characters.",
+        zh_tw: "請輸入 1 至 2000 個字元，不可包含 NUL 字元。",
+        ja: "NUL 文字を含めずに 1～2000 文字を入力してください。",
+        ko: "NUL 문자를 제외하고 1~2000자를 입력하세요.",
+        fr: "Saisissez entre 1 et 2000 caractères, sans caractère NUL.",
+        de: "Geben Sie 1 bis 2000 Zeichen ohne NUL-Zeichen ein.",
+        es: "Introduzca entre 1 y 2000 caracteres sin caracteres NUL.",
+        pt_br: "Digite de 1 a 2000 caracteres, sem caracteres NUL.",
+        ru: "Введите от 1 до 2000 символов без символов NUL.",
+        it: "Inserisci da 1 a 2000 caratteri, senza caratteri NUL.",
+        id: "Masukkan 1–2000 karakter tanpa karakter NUL.",
+        ar: "أدخل من 1 إلى 2000 حرف دون محارف NUL."
     },
     PreviewNeedTranslation {
         zh_cn: "请先选择可用的本地翻译模型，并设置源语言和目标语言。",
-        en: "Select an available local translation model and source/target languages first."
+        en: "Select an available local translation model and source/target languages first.",
+        zh_tw: "請先選擇可用的本機翻譯模型，並設定來源語言與目標語言。",
+        ja: "まず利用可能なローカル翻訳モデルと翻訳元・翻訳先の言語を選択してください。",
+        ko: "먼저 사용 가능한 로컬 번역 모델과 원본 및 대상 언어를 선택하세요.",
+        fr: "Sélectionnez d’abord un modèle de traduction locale disponible et les langues source et cible.",
+        de: "Wählen Sie zuerst ein verfügbares lokales Übersetzungsmodell sowie Quell- und Zielsprache aus.",
+        es: "Primero seleccione un modelo de traducción local disponible y los idiomas de origen y destino.",
+        pt_br: "Primeiro selecione um modelo de tradução local disponível e os idiomas de origem e destino.",
+        ru: "Сначала выберите доступную локальную модель перевода, исходный и целевой языки.",
+        it: "Seleziona prima un modello di traduzione locale disponibile e le lingue di origine e destinazione.",
+        id: "Pilih model penerjemahan lokal yang tersedia serta bahasa sumber dan tujuan terlebih dahulu.",
+        ar: "اختر أولًا نموذج ترجمة محليًا متاحًا ولغتَي المصدر والهدف."
     },
     PreviewLabel {
         zh_cn: "［无声文字测试］",
-        en: "[Silent text test]"
+        en: "[Silent text test]",
+        zh_tw: "［無聲文字測試］",
+        ja: "［音声なしのテキストテスト］",
+        ko: "[음성 없는 텍스트 테스트]",
+        fr: "[Test de texte sans audio]",
+        de: "[Texttest ohne Audio]",
+        es: "[Prueba de texto sin audio]",
+        pt_br: "[Teste de texto sem áudio]",
+        ru: "[Текстовый тест без звука]",
+        it: "[Test di testo senza audio]",
+        id: "[Uji teks tanpa audio]",
+        ar: "[اختبار نص دون صوت]"
     },
     PreviewFailed {
         zh_cn: "无声文字测试失败：{0}",
-        en: "Silent text test failed: {0}"
+        en: "Silent text test failed: {0}",
+        zh_tw: "無聲文字測試失敗：{0}",
+        ja: "音声なしのテキストテストに失敗しました：{0}",
+        ko: "음성 없는 텍스트 테스트 실패: {0}",
+        fr: "Échec du test de texte sans audio : {0}",
+        de: "Texttest ohne Audio fehlgeschlagen: {0}",
+        es: "Error en la prueba de texto sin audio: {0}",
+        pt_br: "Falha no teste de texto sem áudio: {0}",
+        ru: "Ошибка текстового теста без звука: {0}",
+        it: "Test di testo senza audio non riuscito: {0}",
+        id: "Uji teks tanpa audio gagal: {0}",
+        ar: "فشل اختبار النص دون صوت: {0}"
     },
     PreviewBusy {
         zh_cn: "正在录音或收尾，暂时不能进行无声文字测试。",
-        en: "Silent text testing is unavailable during recording or session cleanup."
+        en: "Silent text testing is unavailable during recording or session cleanup.",
+        zh_tw: "正在錄音或結束工作階段，暫時無法進行無聲文字測試。",
+        ja: "録音中やセッションの終了処理中は、音声なしのテキストテストを実行できません。",
+        ko: "녹음 중이거나 세션을 정리하는 동안에는 음성 없는 텍스트 테스트를 사용할 수 없습니다.",
+        fr: "Le test de texte sans audio est indisponible pendant l’enregistrement ou la clôture de la session.",
+        de: "Während der Aufnahme oder des Sitzungsabschlusses ist kein Texttest ohne Audio möglich.",
+        es: "La prueba de texto sin audio no está disponible durante la grabación o el cierre de la sesión.",
+        pt_br: "O teste de texto sem áudio não está disponível durante a gravação ou o encerramento da sessão.",
+        ru: "Текстовый тест без звука недоступен во время записи или завершения сеанса.",
+        it: "Il test di testo senza audio non è disponibile durante la registrazione o la chiusura della sessione.",
+        id: "Uji teks tanpa audio tidak tersedia selama perekaman atau penutupan sesi.",
+        ar: "اختبار النص دون صوت غير متاح أثناء التسجيل أو إنهاء الجلسة."
     },
     PreviewTimeout {
         zh_cn: "未在时限内收到翻译事件；请查看日志后重试。",
-        en: "No translation event arrived before the timeout. Check the log before retrying."
+        en: "No translation event arrived before the timeout. Check the log before retrying.",
+        zh_tw: "未在時限內收到翻譯事件；請查看記錄後重試。",
+        ja: "時間内に翻訳イベントを受信できませんでした。ログを確認してから再試行してください。",
+        ko: "제한 시간 내에 번역 이벤트를 받지 못했습니다. 로그를 확인한 후 다시 시도하세요.",
+        fr: "Aucun événement de traduction reçu avant l’expiration du délai. Consultez le journal avant de réessayer.",
+        de: "Innerhalb des Zeitlimits wurde kein Übersetzungsereignis empfangen. Prüfen Sie das Protokoll, bevor Sie es erneut versuchen.",
+        es: "No se recibió ningún evento de traducción dentro del plazo. Revise el registro antes de volver a intentarlo.",
+        pt_br: "Nenhum evento de tradução foi recebido dentro do prazo. Verifique o log antes de tentar novamente.",
+        ru: "Событие перевода не получено за отведённое время. Проверьте журнал перед повторной попыткой.",
+        it: "Nessun evento di traduzione ricevuto entro il tempo limite. Controlla il registro prima di riprovare.",
+        id: "Tidak ada peristiwa terjemahan yang diterima sebelum batas waktu. Periksa log sebelum mencoba lagi.",
+        ar: "لم يصل أي حدث ترجمة ضمن المهلة المحددة. راجع السجل قبل إعادة المحاولة."
     },
     AppWindowTitle {
-        zh_cn: "AudioScript 声稿",
-        en: "AudioScript",
-        zh_tw: "AudioScript 聲稿",
-        ja: "AudioScript",
-        ko: "AudioScript",
-        fr: "AudioScript",
-        de: "AudioScript",
-        es: "AudioScript",
-        pt_br: "AudioScript",
-        ru: "AudioScript",
-        it: "AudioScript",
-        id: "AudioScript",
-        ar: "AudioScript"
+        zh_cn: "聆窗 LingWindow",
+        en: "LingWindow",
+        zh_tw: "聆窗 LingWindow",
+        ja: "LingWindow",
+        ko: "LingWindow",
+        fr: "LingWindow",
+        de: "LingWindow",
+        es: "LingWindow",
+        pt_br: "LingWindow",
+        ru: "LingWindow",
+        it: "LingWindow",
+        id: "LingWindow",
+        ar: "LingWindow"
     },
 
 
@@ -379,35 +548,35 @@ messages! {
     },
 
     TrayQuit {
-        zh_cn: "退出 AudioScript",
-        en: "Quit AudioScript",
-        zh_tw: "結束 AudioScript",
-        ja: "AudioScript を終了",
-        ko: "AudioScript 종료",
-        fr: "Quitter AudioScript",
-        de: "AudioScript beenden",
-        es: "Salir de AudioScript",
-        pt_br: "Sair do AudioScript",
-        ru: "Выйти из AudioScript",
-        it: "Esci da AudioScript",
-        id: "Keluar dari AudioScript",
-        ar: "إنهاء AudioScript"
+        zh_cn: "退出 LingWindow",
+        en: "Quit LingWindow",
+        zh_tw: "結束 LingWindow",
+        ja: "LingWindow を終了",
+        ko: "LingWindow 종료",
+        fr: "Quitter LingWindow",
+        de: "LingWindow beenden",
+        es: "Salir de LingWindow",
+        pt_br: "Sair do LingWindow",
+        ru: "Выйти из LingWindow",
+        it: "Esci da LingWindow",
+        id: "Keluar dari LingWindow",
+        ar: "إنهاء LingWindow"
     },
 
     TrayTooltip {
-        zh_cn: "AudioScript 声稿",
-        en: "AudioScript",
-        zh_tw: "AudioScript 聲稿",
-        ja: "AudioScript",
-        ko: "AudioScript",
-        fr: "AudioScript",
-        de: "AudioScript",
-        es: "AudioScript",
-        pt_br: "AudioScript",
-        ru: "AudioScript",
-        it: "AudioScript",
-        id: "AudioScript",
-        ar: "AudioScript"
+        zh_cn: "聆窗 LingWindow",
+        en: "LingWindow",
+        zh_tw: "聆窗 LingWindow",
+        ja: "LingWindow",
+        ko: "LingWindow",
+        fr: "LingWindow",
+        de: "LingWindow",
+        es: "LingWindow",
+        pt_br: "LingWindow",
+        ru: "LingWindow",
+        it: "LingWindow",
+        id: "LingWindow",
+        ar: "LingWindow"
     },
 
 
@@ -829,19 +998,19 @@ messages! {
     },
 
     CmdLogsFolderName {
-        zh_cn: "AudioScript-日志-{0}",
-        en: "AudioScript-logs-{0}",
-        zh_tw: "AudioScript-日誌-{0}",
-        ja: "AudioScript-logs-{0}",
-        ko: "AudioScript-logs-{0}",
-        fr: "AudioScript-logs-{0}",
-        de: "AudioScript-logs-{0}",
-        es: "AudioScript-logs-{0}",
-        pt_br: "AudioScript-logs-{0}",
-        ru: "AudioScript-logs-{0}",
-        it: "AudioScript-logs-{0}",
-        id: "AudioScript-logs-{0}",
-        ar: "AudioScript-logs-{0}"
+        zh_cn: "LingWindow-日志-{0}",
+        en: "LingWindow-logs-{0}",
+        zh_tw: "LingWindow-日誌-{0}",
+        ja: "LingWindow-logs-{0}",
+        ko: "LingWindow-logs-{0}",
+        fr: "LingWindow-logs-{0}",
+        de: "LingWindow-logs-{0}",
+        es: "LingWindow-logs-{0}",
+        pt_br: "LingWindow-logs-{0}",
+        ru: "LingWindow-logs-{0}",
+        it: "LingWindow-logs-{0}",
+        id: "LingWindow-logs-{0}",
+        ar: "LingWindow-logs-{0}"
     },
 
     CmdUnknownModel {
@@ -1839,19 +2008,19 @@ messages! {
     },
 
     AsrMacSpeechPermission {
-        zh_cn: "未获得语音识别权限：请在「系统设置 → 隐私与安全性 → 语音识别」中允许 AudioScript",
-        en: "Speech recognition permission was denied: allow AudioScript in System Settings → Privacy & Security → Speech Recognition",
-        zh_tw: "未取得語音辨識權限：請在「系統設定 → 隱私權與安全性 → 語音辨識」中允許 AudioScript",
-        ja: "音声認識の権限がありません：「システム設定 → プライバシーとセキュリティ → 音声認識」で AudioScript を許可してください",
-        ko: "음성 인식 권한이 없습니다: 시스템 설정 → 개인정보 보호 및 보안 → 음성 인식에서 AudioScript를 허용하세요",
-        fr: "Autorisation de reconnaissance vocale refusée : autorisez AudioScript dans Réglages Système → Confidentialité et sécurité → Reconnaissance vocale",
-        de: "Spracherkennung nicht erlaubt: Erlauben Sie AudioScript in Systemeinstellungen → Datenschutz & Sicherheit → Spracherkennung",
-        es: "Permiso de reconocimiento de voz denegado: permita AudioScript en Ajustes del Sistema → Privacidad y seguridad → Reconocimiento de voz",
-        pt_br: "A permissão de reconhecimento de fala foi negada: permita o AudioScript em Ajustes do Sistema → Privacidade e Segurança → Reconhecimento de Fala",
-        ru: "Разрешение на распознавание речи отклонено: разрешите AudioScript в системных настройках → «Конфиденциальность и безопасность» → «Распознавание речи»",
-        it: "L’autorizzazione al riconoscimento vocale è stata negata: consenti AudioScript in Impostazioni di Sistema → Privacy e sicurezza → Riconoscimento vocale",
-        id: "Izin pengenalan ucapan ditolak: izinkan AudioScript di Pengaturan Sistem → Privasi & Keamanan → Pengenalan Ucapan",
-        ar: "تم رفض إذن التعرف على الكلام: اسمح لـ AudioScript في إعدادات النظام → الخصوصية والأمان → التعرف على الكلام"
+        zh_cn: "未获得语音识别权限：请在「系统设置 → 隐私与安全性 → 语音识别」中允许 LingWindow",
+        en: "Speech recognition permission was denied: allow LingWindow in System Settings → Privacy & Security → Speech Recognition",
+        zh_tw: "未取得語音辨識權限：請在「系統設定 → 隱私權與安全性 → 語音辨識」中允許 LingWindow",
+        ja: "音声認識の権限がありません：「システム設定 → プライバシーとセキュリティ → 音声認識」で LingWindow を許可してください",
+        ko: "음성 인식 권한이 없습니다: 시스템 설정 → 개인정보 보호 및 보안 → 음성 인식에서 LingWindow를 허용하세요",
+        fr: "Autorisation de reconnaissance vocale refusée : autorisez LingWindow dans Réglages Système → Confidentialité et sécurité → Reconnaissance vocale",
+        de: "Spracherkennung nicht erlaubt: Erlauben Sie LingWindow in Systemeinstellungen → Datenschutz & Sicherheit → Spracherkennung",
+        es: "Permiso de reconocimiento de voz denegado: permita LingWindow en Ajustes del Sistema → Privacidad y seguridad → Reconocimiento de voz",
+        pt_br: "A permissão de reconhecimento de fala foi negada: permita o LingWindow em Ajustes do Sistema → Privacidade e Segurança → Reconhecimento de Fala",
+        ru: "Разрешение на распознавание речи отклонено: разрешите LingWindow в системных настройках → «Конфиденциальность и безопасность» → «Распознавание речи»",
+        it: "L’autorizzazione al riconoscimento vocale è stata negata: consenti LingWindow in Impostazioni di Sistema → Privacy e sicurezza → Riconoscimento vocale",
+        id: "Izin pengenalan ucapan ditolak: izinkan LingWindow di Pengaturan Sistem → Privasi & Keamanan → Pengenalan Ucapan",
+        ar: "تم رفض إذن التعرف على الكلام: اسمح لـ LingWindow في إعدادات النظام → الخصوصية والأمان → التعرف على الكلام"
     },
 
     AsrMacSpeechLocaleUnavailable {
@@ -2946,6 +3115,70 @@ messages! {
         ar: "(افتراضي النظام)"
     },
 
+    AudioProcessUnsupported {
+        zh_cn: "当前系统不支持按应用采集系统声音：{0}",
+        en: "Per-app system audio capture is not supported on this system: {0}",
+        zh_tw: "目前系統不支援按應用程式擷取系統聲音：{0}",
+        ja: "このシステムはアプリごとのシステム音声キャプチャに対応していません：{0}",
+        ko: "이 시스템은 앱별 시스템 오디오 캡처를 지원하지 않습니다: {0}",
+        fr: "La capture de l’audio système par application n’est pas prise en charge sur ce système : {0}",
+        de: "Die systemweite Audioaufnahme pro App wird auf diesem System nicht unterstützt: {0}",
+        es: "La captura de audio del sistema por aplicación no es compatible con este sistema: {0}",
+        pt_br: "A captura de áudio do sistema por aplicativo não é compatível com este sistema: {0}",
+        ru: "Захват системного звука по приложениям не поддерживается в этой системе: {0}",
+        it: "L’acquisizione dell’audio di sistema per app non è supportata su questo sistema: {0}",
+        id: "Penangkapan audio sistem per aplikasi tidak didukung di sistem ini: {0}",
+        ar: "التقاط صوت النظام حسب التطبيق غير مدعوم على هذا النظام: {0}"
+    },
+
+    AudioProcessNotFound {
+        zh_cn: "未找到应用「{0}」的音频输出。请先让它播放声音，然后重新选择应用",
+        en: "No audio output found for \"{0}\". Start playback in that app, then select it again",
+        zh_tw: "找不到應用程式「{0}」的音訊輸出。請先讓它播放聲音，然後重新選擇應用程式",
+        ja: "「{0}」の音声出力が見つかりません。先に再生してから、もう一度アプリを選択してください",
+        ko: "「{0}」의 오디오 출력을 찾을 수 없습니다. 먼저 소리를 재생한 뒤 앱을 다시 선택하세요",
+        fr: "Aucune sortie audio trouvée pour « {0} ». Lancez une lecture, puis sélectionnez à nouveau l’application.",
+        de: "Keine Audioausgabe für „{0}“ gefunden. Starten Sie die Wiedergabe und wählen Sie die App erneut aus.",
+        es: "No se encontró salida de audio para «{0}». Reproduce algo y vuelve a seleccionar la aplicación.",
+        pt_br: "Nenhuma saída de áudio encontrada para «{0}». Inicie a reprodução e selecione o aplicativo novamente.",
+        ru: "Не найдена аудиовыход приложения «{0}». Включите воспроизведение и выберите приложение заново.",
+        it: "Nessuna uscita audio trovata per «{0}». Avvia la riproduzione e seleziona di nuovo l’app.",
+        id: "Tidak ada keluaran audio untuk «{0}». Mulai pemutaran, lalu pilih ulang aplikasi.",
+        ar: "لم يُعثر على إخراج صوتي لـ«{0}». ابدأ التشغيل ثم أعد اختيار التطبيق."
+    },
+
+    AudioAppNotSelected {
+        zh_cn: "请选择要采集的应用",
+        en: "Select an application to capture",
+        zh_tw: "請選擇要擷取的應用程式",
+        ja: "キャプチャするアプリを選択してください",
+        ko: "캡처할 앱을 선택하세요",
+        fr: "Choisissez une application à capturer",
+        de: "Wählen Sie eine App zum Aufnehmen",
+        es: "Elige una aplicación para capturar",
+        pt_br: "Escolha um aplicativo para capturar",
+        ru: "Выберите приложение для захвата",
+        it: "Scegli un’app da catturare",
+        id: "Pilih aplikasi untuk ditangkap",
+        ar: "اختر تطبيقًا لالتقاطه"
+    },
+
+    AudioAppDefault {
+        zh_cn: "应用声音",
+        en: "Application audio",
+        zh_tw: "應用程式聲音",
+        ja: "アプリの音声",
+        ko: "앱 소리",
+        fr: "Audio d’une application",
+        de: "App-Audio",
+        es: "Audio de una aplicación",
+        pt_br: "Áudio de um aplicativo",
+        ru: "Звук приложения",
+        it: "Audio di un’app",
+        id: "Audio aplikasi",
+        ar: "صوت التطبيق"
+    },
+
     AudioAccumulatorBusy {
         zh_cn: "检测累加器仍被占用",
         en: "The probe accumulator is still in use",
@@ -3271,19 +3504,19 @@ messages! {
 
 
     ExportTitle {
-        zh_cn: "# AudioScript 转写记录",
-        en: "# AudioScript Transcript",
-        zh_tw: "# AudioScript 轉寫紀錄",
-        ja: "# AudioScript 文字起こし",
-        ko: "# AudioScript 전사",
-        fr: "# Transcription AudioScript",
-        de: "# AudioScript-Transkript",
-        es: "# Transcripción de AudioScript",
-        pt_br: "# Transcrição do AudioScript",
-        ru: "# Транскрипция AudioScript",
-        it: "# Trascrizione di AudioScript",
-        id: "# Transkrip AudioScript",
-        ar: "# نسخ AudioScript"
+        zh_cn: "# LingWindow 转写记录",
+        en: "# LingWindow Transcript",
+        zh_tw: "# LingWindow 轉寫紀錄",
+        ja: "# LingWindow 文字起こし",
+        ko: "# LingWindow 전사",
+        fr: "# Transcription LingWindow",
+        de: "# LingWindow-Transkript",
+        es: "# Transcripción de LingWindow",
+        pt_br: "# Transcrição do LingWindow",
+        ru: "# Транскрипция LingWindow",
+        it: "# Trascrizione di LingWindow",
+        id: "# Transkrip LingWindow",
+        ar: "# نسخ LingWindow"
     },
 
     ExportTime {

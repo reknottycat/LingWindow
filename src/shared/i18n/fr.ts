@@ -1,6 +1,48 @@
 import type { Messages } from './zh-CN'
 
 export const fr: Partial<Messages> = {
+  'audio.previewControlTitle': 'Aperçu du niveau audio',
+  'audio.previewExplicitHint':
+    'Le niveau de la source sélectionnée est capté uniquement après un clic sur Démarrer. Aucune reconnaissance vocale n’est exécutée. Changer de source ou quitter cette page arrête l’aperçu.',
+  'audio.previewStart': 'Démarrer l’aperçu du niveau',
+  'audio.previewStop': 'Arrêter l’aperçu du niveau',
+  'models.modelMtHymt2Title': 'HY-MT2 1.8B',
+  'models.hymt2Directions': 'Anglais / russe → chinois',
+  'models.manualInstall': 'Installez localement le modèle et Python ; aucun téléchargement intégré',
+  'models.statusManual': 'Configuration locale requise',
+  'models.previewTitle': 'Test de texte silencieux',
+  'models.previewBody':
+    'Testez le traducteur actuel et la fenêtre de sous-titres sans enregistrement, lecture audio ni reconnaissance vocale. Les segments de test identifiés restent dans la transcription. Le temps inclut le chargement initial du modèle, pas la latence audio de bout en bout.',
+  'models.previewInput': 'Saisissez le texte source (2 000 caractères maximum)',
+  'models.previewButton': 'Tester la traduction et les sous-titres',
+  'models.previewWorking': 'Traduction…',
+  'models.previewResult': 'Événement de traduction envoyé en {ms} ms. Vérifiez visuellement les sous-titres.',
+  'translate.directionSubtitleHymt2':
+    'Version locale HY-MT2 : anglais ou russe vers chinois uniquement. Le son russe nécessite un modèle de reconnaissance compatible avec le russe.',
+  'overlay.displayMode': 'Affichage des sous-titres',
+  'overlay.displayModeDescription': 'Modifie uniquement l’affichage ; la transcription et la traduction continuent.',
+  'overlay.displaySource': 'Original',
+  'overlay.displayBilingual': 'Les deux',
+  'overlay.displayTranslation': 'Traduction',
+  'overlay.controlsHelp':
+    'Déplacez la fenêtre avec la poignée du haut. × masque les sous-titres sans arrêter la transcription. Vous pouvez les réafficher ou les déverrouiller ici ou dans la barre des menus.',
+  'overlayWindow.drag': 'Déplacer',
+  'overlayWindow.hide': 'Masquer les sous-titres (la transcription continue)',
+  'overlayWindow.hideShortcut': 'Masquer les sous-titres (la transcription continue). Réafficher : {shortcut}',
+  'overlayWindow.lock': 'Verrouiller · les clics traversent la fenêtre. Déverrouiller : {shortcut}',
+  'overlayWindow.lockUnavailable':
+    'Configurez un raccourci de déverrouillage fonctionnel dans les réglages des sous-titres avant de verrouiller ici.',
+  'overlayWindow.locked': 'Verrouillé · {shortcut} pour déverrouiller',
+  'overlayWindow.recover': 'Déverrouiller dans la fenêtre principale → Sous-titres',
+  'overlayWindow.translationPending': 'Traduction…',
+  'overlayWindow.translationWaiting': 'En attente de traduction…',
+  'overlayWindow.translationUnavailable': 'Aucune traduction pour ce segment',
+  'about.upstreamCreditTitle': 'Basé sur AudioScript',
+  'about.upstreamCreditBody':
+    'Merci à Nico (niyongsheng) d’avoir publié AudioScript en open source. Ce dérivé est basé sur la version 0.7.0 et conserve la licence MIT et les droits d’auteur d’origine.',
+  'about.manualDistribution':
+    'Les mises à jour automatiques sont désactivées ; téléchargez-les manuellement depuis les versions de LingWindow.',
+  'about.forkName': '聆窗 LingWindow',
   'common.cancel': 'Annuler',
   'common.close': 'Fermer',
   'common.retry': 'Réessayer',
@@ -57,7 +99,7 @@ export const fr: Partial<Messages> = {
   'language.id': 'Bahasa Indonesia',
   'language.ar': 'العربية',
 
-  'app.windowTitle': 'AudioScript',
+  'app.windowTitle': 'LingWindow',
   'app.updateAvailable': 'La version v{version} est disponible',
   'app.updateNow': 'Mettre à jour maintenant',
   'app.updateIgnore': 'Ignorer',
@@ -109,6 +151,12 @@ export const fr: Partial<Messages> = {
   'whatsNew.multichannelMicTitle': 'Micros multicanaux sous Windows',
   'whatsNew.multichannelMicBody':
     'Les réseaux de micros multicanaux comme Intel Smart Sound sont maintenant capturés et mixés correctement au lieu d’échouer au démarrage.',
+  'whatsNew.appAudioTitle': 'Capter l’audio d’une application',
+  'whatsNew.appAudioBody':
+    'Choisissez jusqu’à quatre applications (navigateur, visioconférence…) et transcrivez uniquement leur son.',
+  'whatsNew.crashReportsTitle': 'Confidentialité intégrée',
+  'whatsNew.crashReportsBody':
+    'Aptabase, Sentry et la collecte de données de l’interface sont désactivés dans cette version.',
   'whatsNew.viewNotes': 'Voir les notes de version complètes',
   'whatsNew.continue': 'Continuer',
 
@@ -122,19 +170,35 @@ export const fr: Partial<Messages> = {
   'transcribe.emptyCapturing': 'Reconnaissance en cours…',
   'transcribe.emptyIdle': 'Cliquez sur « Lancer la transcription » en haut à gauche.',
   'transcribe.keepHint': 'Le contenu reste après l’arrêt jusqu’à ce que vous l’effaciez ou quittiez l’application.',
-  'transcribe.exportFileName': 'AudioScript-transcript-{stamp}.md',
+  'transcribe.exportFileName': 'LingWindow-transcript-{stamp}.md',
 
   'audio.title': 'Audio',
   'audio.sourceSection': 'Source audio',
   'audio.sourceLoopbackLabel': 'Audio du système',
-  'audio.sourceLoopbackDescription':
-    'Transcrit ce que le lecteur diffuse. Nécessite l’autorisation d’enregistrement de l’écran et de l’audio système.',
+  'audio.sourceLoopbackDescription': 'Transcrit ce que le lecteur diffuse.',
+  'audio.sourceAppLabel': 'Audio d’une application',
+  'audio.sourceAppDescription': 'Transcrit uniquement la sortie des applications sélectionnées.',
   'audio.sourceMicLabel': 'Microphone',
   'audio.sourceMicDescription': 'Transcrit uniquement l’entrée du microphone ; l’audio du lecteur n’est pas touché.',
   'audio.sourceMixLabel': 'Microphone + audio du système',
   'audio.sourceMixDescription': 'Capture les deux à la fois : l’autre personne et vous. Idéal pour les réunions.',
   'audio.sourceHint': 'Changer de source réénumère la liste des appareils.',
   'audio.inputDevice': 'Périphérique d’entrée',
+  'audio.appSection': 'Application',
+  'audio.app': 'Application',
+  'audio.appSelectPlaceholder': 'Choisir une application',
+  'audio.appHint': 'Capture jusqu’à 4 sources audio d’applications.',
+  'audio.appPickHint': 'Choisissez jusqu’à 4 applications à capturer ensemble.',
+  'audio.appRequired': 'Choisissez une application à capturer',
+  'audio.appLoading': 'Recherche des applications qui émettent du son…',
+  'audio.appEmpty': 'Aucune application n’émet de son. Lancez une lecture, puis actualisez.',
+  'audio.appPlaying': 'En lecture',
+  'audio.appNotRunning': 'Non lancée',
+  'audio.appIdle': 'Pas en lecture',
+  'audio.appShowAll': 'Afficher toutes les applications',
+  'audio.appOnlyPlaying': 'Afficher seulement celles en lecture',
+  'audio.appShowAllHint': 'Inclure les applications qui n’émettent pas de son',
+  'audio.appNoPlaying': 'Aucune application en lecture. Déployez « Afficher toutes les applications ».',
   'audio.micDevice': 'Microphone',
   'audio.systemDevice': 'Périphérique audio système',
   'audio.deviceSpec': '{channels} canaux · {rate}',
@@ -147,6 +211,8 @@ export const fr: Partial<Messages> = {
   'audio.previewFailed': 'Impossible de prévisualiser le niveau d’entrée',
   'audio.captureHint': 'Les changements de périphérique pendant la capture s’appliquent à la session suivante.',
   'audio.silenceTitle': 'Aucun son détecté (niveau ≈ 0)',
+  'audio.silenceCheckApp':
+    'Vérifiez que « {app} » émet du son ; une application silencieuse n’a aucun flux audio à capturer.',
   'audio.silenceCheckPlayer': 'Vérifiez que le lecteur émet du son et que le volume système n’est pas à zéro.',
   'audio.silenceCheckPermission': 'Vérifiez l’autorisation d’enregistrement de l’écran et de l’audio système de macOS.',
   'audio.silencePermissionDeniedNote':
@@ -169,7 +235,7 @@ export const fr: Partial<Messages> = {
   'permissions.speechDescNotDetermined':
     'Pas encore autorisé ; macOS demandera l’autorisation au démarrage de la transcription, ou demandez-la maintenant.',
   'permissions.speechDescDenied':
-    'Refusé. Autorisez AudioScript à utiliser la reconnaissance vocale dans Réglages Système.',
+    'Refusé. Autorisez LingWindow à utiliser la reconnaissance vocale dans Réglages Système.',
   'permissions.speechAssets': '{count} ressources linguistiques système installées.',
   'permissions.speechAuthorized': 'Autorisé',
   'permissions.speechNotDetermined': 'Non autorisé',
@@ -313,11 +379,9 @@ export const fr: Partial<Messages> = {
   'general.autostartDescription':
     'L’application reste active dans la barre des menus après la fermeture de la fenêtre principale.',
   'general.privacy': 'Confidentialité',
-  'general.privacyFooter':
-    'Les statistiques ne contiennent que des noms d’événements et quelques propriétés énumérées ; jamais le texte transcrit, les noms d’appareils ou les chemins de fichiers.',
   'general.analytics': 'Statistiques d’utilisation anonymes',
   'general.analyticsDescription':
-    'Envoie l’utilisation des fonctionnalités via Aptabase pour aider à améliorer AudioScript.',
+    'Cette version ne collecte aucune statistique d’utilisation et ne transmet aucun rapport d’erreur.',
   'general.diagnostics': 'Diagnostics',
   'general.exportLogs': 'Exporter les journaux',
   'general.exportLogsDescription': 'Les copie sur le bureau avec un nom daté, puis ouvre le dossier.',
@@ -414,8 +478,8 @@ export const fr: Partial<Messages> = {
   'about.platform': 'Plateforme',
   'about.website': 'Site web',
   'about.support': 'Soutenir le développement',
-  'about.sponsor': 'Sponsoriser',
-  'about.sponsorDescription': 'Si AudioScript vous aide, vous pouvez soutenir le développement futur sur Afdian.',
+  'about.sponsor': 'Soutenir l’auteur d’origine',
+  'about.sponsorDescription': 'Soutenez Nico, créateur du projet d’origine AudioScript, sur Afdian.',
   'about.afdian': 'Afdian',
   'about.licensesGroup': 'Licences open source',
   'about.modelsLicenses': 'Modèles et licences',

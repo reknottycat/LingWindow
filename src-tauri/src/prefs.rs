@@ -116,6 +116,21 @@ mod tests {
     }
 
     #[test]
+    fn legacy_preferences_keep_models_and_overlay_but_never_enable_telemetry() {
+        let p = parse(r#"{"sourceLang":"ru","targetLang":"zh","asrModelTier":"nemotron","mtModelTier":"hymt2","analyticsEnabled":true,"overlay":{"displayMode":"translation"}}"#).unwrap();
+        assert!(!p.analytics_enabled, "旧版偏好不能开启遥测");
+        assert_eq!(p.source_lang, "ru");
+        assert_eq!(p.target_lang, "zh");
+        assert_eq!(p.asr_model_tier, crate::config::AsrModelTier::Nemotron);
+        assert_eq!(p.mt_model_tier, crate::config::MtModelTier::Hymt2);
+        assert_eq!(
+            p.overlay.display_mode,
+            crate::config::OverlayDisplayMode::Translation
+        );
+        assert!(p.app_targets.is_empty(), "旧偏好缺失新字段时默认不选应用");
+    }
+
+    #[test]
     fn empty_object_yields_all_defaults() {
         let p = parse("{}").unwrap();
         assert_eq!(p, Preferences::default());
@@ -185,6 +200,7 @@ mod tests {
             device_id: Some("device-7".into()),
             mix_mic_device_id: Some("mic-3".into()),
             mix_system_device_id: Some("out-4".into()),
+            app_targets: Vec::new(),
             translate_engine: TranslateEngine::Off,
             asr_engine: crate::config::EngineType::LocalStreaming,
             mt_model_tier: crate::config::MtModelTier::default(),

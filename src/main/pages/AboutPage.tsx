@@ -6,40 +6,27 @@ import { useI18n } from '@/shared/i18n'
 import { formatCmdError, type ModelsList, modelsList, openContact, openRepo, openSponsor, openUrl } from '@/shared/ipc'
 import { DOWNLOAD_URL, SITE_URL } from '@/shared/links'
 import { modelTitle } from '@/shared/models'
-import { ModelKind, TaskStatus } from '@/shared/types'
+import { ModelKind } from '@/shared/types'
 import { Button } from '@/ui/Button'
 import { Icon } from '@/ui/Icon'
 import { Page } from '@/ui/Page'
-import { ProgressBar } from '@/ui/ProgressBar'
 import { SettingsGroup, SettingsRow } from '@/ui/Settings'
+import thirdPartyNotices from '../../../docs/THIRD_PARTY_NOTICES.md?raw'
 
 const EGG_TAPS = 7
 const EGG_TAP_WINDOW = 1100
 
-function afdianBadge(label: string): string {
-  return `https://img.shields.io/badge/${encodeURIComponent(label)}-Afdian-946ce6?style=for-the-badge&logo=github&logoColor=white`
-}
+const VERSION_COLORS = ['#fc413d', '#ff6b2b', '#fec700', '#88de42', '#00a9bb', '#3186ff', '#9378ff'] as const
 
 export function AboutPage() {
-  const {
-    info,
-    setError,
-    status,
-    updateInfo,
-    updatePhase,
-    updateProgress,
-    updateError,
-    installedVersion,
-    checkUpdate,
-    installUpdate,
-    restartApp,
-  } = useStore()
+  const { info, setError } = useStore()
   const { t } = useI18n()
   const [models, setModels] = useState<ModelsList | null>(null)
   const [modelsFailed, setModelsFailed] = useState(false)
   const [licensesOpen, setLicensesOpen] = useState(false)
   const [eggOpen, setEggOpen] = useState(false)
   const [eggTaps, setEggTaps] = useState(0)
+  const [versionPulse, setVersionPulse] = useState(0)
   const lastEggTap = useRef(0)
   const closeEgg = useCallback(() => setEggOpen(false), [])
   const run = useCallback(
@@ -50,6 +37,7 @@ export function AboutPage() {
   )
 
   function tapVersion() {
+    setVersionPulse((n) => n + 1)
     const now = performance.now()
     const taps = now - lastEggTap.current > EGG_TAP_WINDOW ? 1 : eggTaps + 1
     lastEggTap.current = now
@@ -76,36 +64,6 @@ export function AboutPage() {
     }
   }, [])
 
-  const capturing = status === TaskStatus.Capturing
-  const percent =
-    updateProgress?.total != null
-      ? Math.min(100, Math.floor((updateProgress.downloaded / updateProgress.total) * 100))
-      : null
-
-  const updateDescription = (() => {
-    if (updatePhase === 'downloading') {
-      const version = updateInfo?.version ?? ''
-      return percent == null
-        ? t('about.updateDownloading', { version })
-        : t('about.updateDownloadingPercent', { version, percent })
-    }
-    if (updatePhase === 'ready') {
-      const version = installedVersion ?? updateInfo?.version ?? ''
-      return capturing ? t('about.updateReadyCapturing', { version }) : t('about.updateReady', { version })
-    }
-    if (updatePhase === 'error') {
-      return t('about.updateError', { error: updateError ?? t('about.unknownError') })
-    }
-    if (updatePhase === 'checking') return t('about.updateChecking')
-    if (updateInfo?.available) {
-      return capturing
-        ? t('about.updateAvailableCapturing')
-        : t('about.updateAvailable', { version: updateInfo.version ?? '' })
-    }
-    if (updateInfo) return t('about.updateLatest', { version: updateInfo.currentVersion })
-    return t('about.updateIdle')
-  })()
-
   return (
     <Page title={t('about.title')}>
       <SettingsGroup title={t('about.appGroup')}>
@@ -117,8 +75,9 @@ export function AboutPage() {
           control={
             <Mono>
               <span
-                key={eggTaps}
-                className={eggTaps > 0 ? 'inline-block animate-[egg-tap_260ms_ease-out]' : 'inline-block'}
+                key={versionPulse}
+                className={versionPulse > 0 ? 'inline-block animate-[egg-tap_260ms_ease-out]' : 'inline-block'}
+                style={versionPulse > 0 ? { color: VERSION_COLORS[versionPulse % VERSION_COLORS.length] } : undefined}
               >
                 {info?.version ?? '—'}
               </span>
@@ -127,56 +86,20 @@ export function AboutPage() {
         />
         <SettingsRow
           icon="download"
-          title={t('about.checkUpdate')}
-          description={
-            <>
-              {updateDescription}
-              {updateInfo?.available && updatePhase === 'idle' && updateInfo.notes && (
-                <p className="mt-1 line-clamp-3 whitespace-pre-line">{updateInfo.notes}</p>
-              )}
-            </>
-          }
+          title={t('about.manualUpdate')}
+          description={t('about.manualDistribution')}
           control={
-            updatePhase === 'downloading' ? (
-              <div className="flex items-center gap-2">
-                <ProgressBar value={percent} label={t('about.updateProgress')} />
-                <Mono>{percent == null ? t('about.downloading') : `${percent}%`}</Mono>
-              </div>
-            ) : updatePhase === 'ready' ? (
-              <Button size="sm" variant="primary" icon="refresh" onClick={() => void restartApp()} disabled={capturing}>
-                {t('common.restart')}
-              </Button>
-            ) : updatePhase === 'error' ? (
-              <div className="flex items-center gap-1.5">
-                <Button size="sm" onClick={() => void checkUpdate()} disabled={!info}>
-                  {t('common.retry')}
-                </Button>
-                <Button size="sm" variant="primary" icon="external" onClick={() => run(() => openUrl(DOWNLOAD_URL))}>
-                  {t('about.manualUpdate')}
-                </Button>
-              </div>
-            ) : updateInfo?.available ? (
-              <Button
-                size="sm"
-                variant="primary"
-                icon="download"
-                onClick={() => void installUpdate()}
-                disabled={capturing || updatePhase === 'checking'}
-              >
-                {t('common.downloadAndInstall')}
-              </Button>
-            ) : (
-              <Button
-                size="sm"
-                icon="refresh"
-                onClick={() => void checkUpdate()}
-                disabled={!info || updatePhase === 'checking'}
-                pending={updatePhase === 'checking'}
-              >
-                {t('common.check')}
-              </Button>
-            )
+            <Button size="sm" icon="external" onClick={() => run(() => openUrl(DOWNLOAD_URL))}>
+              {t('about.manualUpdate')}
+            </Button>
           }
+        />
+        <SettingsRow
+          icon="heart"
+          title={t('about.upstreamCreditTitle')}
+          description={t('about.upstreamCreditBody')}
+          onClick={() => run(() => openUrl('https://github.com/niyongsheng/AudioScript'))}
+          control={<Icon name="external" size={16} />}
         />
         <SettingsRow
           icon="chip"
@@ -201,7 +124,7 @@ export function AboutPage() {
           title={t('about.sponsor')}
           description={t('about.sponsorDescription')}
           onClick={() => run(openSponsor)}
-          control={<img src={afdianBadge(t('about.afdian'))} alt={t('about.afdian')} className="h-7 w-auto" />}
+          control={<Icon name="external" size={16} />}
         />
       </SettingsGroup>
 
@@ -266,6 +189,12 @@ export function AboutPage() {
             <SettingsRow title={modelsFailed ? t('about.licenseLoadFailed') : t('common.loading')} />
           ))}
       </SettingsGroup>
+
+      {licensesOpen && (
+        <pre className="whitespace-pre-wrap break-words rounded-xl bg-[var(--color-surface-1)] p-4 text-xs leading-relaxed">
+          {thirdPartyNotices}
+        </pre>
+      )}
 
       {eggOpen && info && (
         <EasterEgg

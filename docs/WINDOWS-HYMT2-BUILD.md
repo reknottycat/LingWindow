@@ -1,4 +1,4 @@
-# Windows HYMT2 云端构建与验证
+# LingWindow Windows HYMT2 云端构建与验证
 
 ## 当前验证边界
 
@@ -11,7 +11,7 @@
 ## 云端构建
 
 1. 将代码放入已获授权的专用 GitHub 仓库，启用 Actions。不要推送到上游或借用无关仓库。
-2. 推送到 `windows-hymt2` 或 `windows-hymt2/…` 分支，或手动运行 `Windows HYMT2 validation`。手动触发入口通常要求工作流先存在于默认分支。
+2. 推送到 `main`、`windows-hymt2`、`windows-hymt2/…` 或 `lingwindow/…` 分支，或手动运行 `LingWindow Windows validation`。手动触发入口通常要求工作流先存在于默认分支。
 3. CI 使用 `windows-latest` 的 x64 MSVC 环境，安装 Node 22、仓库声明的 pnpm、Python 3.12、Rust stable、typeshare-cli 1.13.4。
 4. 保留 `RUSTFLAGS=-C target-feature=+crt-static`，使 Rust 与 CT2/sherpa 的静态 CRT 配置一致。
 5. 安装前端依赖，获取基础模型，检查模型目录清单元数据，生成 TypeScript 类型并执行类型检查、Python worker 测试、前端构建、Rust 库测试。
@@ -20,7 +20,7 @@
 
 `pnpm verify:models` 检查 catalog 元数据，不是对所有已下载模型逐个计算校验和。各下载脚本自己的校验逻辑仍然适用。安装包的 SHA256 用于核对传输完整性，不等于发行者数字签名。
 
-工作流仅有分支 push 与手动触发，无 tag 触发、Release 创建或部署步骤，且仓库权限为 `contents: read`。原 `.github/workflows/build.yml` 的上游 tag 发布机制不在本工作流内；验证期间不要创建 `v*` tag，也不要误运行原 `Build & Release` 工作流。
+工作流仅有分支 push 与手动触发，无 tag 触发、Release 创建或部署步骤，且仓库权限为 `contents: read`。原上游 `build.yml`、`pages.yml` 已保留为 `.disabled`，不会触发旧签名、发布或 Pages 部署。正式发布由维护者单独审核，验证工作流不发布 Release。
 
 ## 本地 Windows 重现
 
@@ -36,9 +36,9 @@ pnpm fetch:mt
 pnpm verify:models
 pnpm gen:types
 pnpm typecheck
-python -m unittest discover -s scripts -p 'test_windows_hymt2_worker.py'
+python -X utf8 -m unittest discover -s scripts -p 'test_windows_hymt2_worker.py'
 pnpm build
-cargo test --manifest-path src-tauri/Cargo.toml --locked --lib
+cargo test --manifest-path src-tauri/Cargo.toml --release --locked --lib
 pnpm tauri build --bundles nsis,msi
 ```
 
@@ -57,3 +57,5 @@ pnpm tauri build --bundles nsis,msi
 - 定制版本应禁用上游自动更新或改成自己的受控更新来源，防止被原版覆盖。不生成 updater artifacts 本身并不会禁用应用内更新查询。
 
 CI 单元测试和打包不覆盖以上交互场景。未签名安装包可能触发 Windows SmartScreen；正式发行前应另行安排受信任代码签名，而不是向本流程复制上游密钥。
+
+应用标识为 `com.lingwindow.desktop`；实际可执行文件名以 `Cargo.toml` 的 `[[bin]].name` 为准，当前是 `LingWindow.exe`。工作流读取并校验该名称，不沿用旧 `AudioScript.exe`。包内保留 `NOTICE` 及 `resources/third-party` 的来源和许可。

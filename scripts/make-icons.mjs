@@ -9,7 +9,7 @@ const CANVAS = 1024
 const INSET = 100
 const TRAY_SIZE = 36
 const TRAY_INSET = 1
-const MARK_BOX = { x: 128, y: 166.4, w: 729.6, h: 691.2 }
+const MARK_BOX = { x: 172, y: 208, w: 680, h: 608 }
 
 const srcPath = fileURLToPath(new URL('../logo.svg', import.meta.url))
 const iconsDir = fileURLToPath(new URL('../src-tauri/icons', import.meta.url))

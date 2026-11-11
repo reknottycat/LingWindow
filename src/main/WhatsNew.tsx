@@ -1,6 +1,7 @@
 import { useEffect, useId } from 'react'
 import { type MessageKey, useI18n } from '@/shared/i18n'
 import { openUrl } from '@/shared/ipc'
+import { SITE_URL } from '@/shared/links'
 import { Button } from '@/ui/Button'
 import { Icon, type IconName } from '@/ui/Icon'
 import appIcon from './app-icon.png'
@@ -11,7 +12,7 @@ export interface WhatsNewFeature {
   bodyKey: MessageKey
 }
 
-export const SEEN_VERSION_KEY = 'audioscript.seen-version'
+export const SEEN_VERSION_KEY = 'lingwindow.seen-version'
 
 const FEATURES_V030: readonly WhatsNewFeature[] = [
   {
@@ -85,11 +86,28 @@ const FEATURES_V062: readonly WhatsNewFeature[] = [
   },
 ]
 
+const FEATURES_V070: readonly WhatsNewFeature[] = [
+  { icon: 'heart', titleKey: 'about.forkName', bodyKey: 'about.upstreamCreditBody' },
+  { icon: 'translate', titleKey: 'models.modelMtHymt2Title', bodyKey: 'translate.directionSubtitleHymt2' },
+  { icon: 'waveform', titleKey: 'audio.previewControlTitle', bodyKey: 'audio.previewExplicitHint' },
+  {
+    icon: 'overlay',
+    titleKey: 'whatsNew.appAudioTitle',
+    bodyKey: 'whatsNew.appAudioBody',
+  },
+  {
+    icon: 'shield',
+    titleKey: 'whatsNew.crashReportsTitle',
+    bodyKey: 'whatsNew.crashReportsBody',
+  },
+]
+
 const WHATS_NEW: Record<string, readonly WhatsNewFeature[]> = {
   '0.3.0': FEATURES_V030,
   '0.5.0': FEATURES_V050,
   '0.6.1': FEATURES_V061,
   '0.6.2': FEATURES_V062,
+  '0.7.0': FEATURES_V070,
 }
 
 export function whatsNewFor(version: string): readonly WhatsNewFeature[] | undefined {
@@ -106,7 +124,7 @@ interface Props {
 export function WhatsNew({ version, name, features, onClose }: Props) {
   const { t } = useI18n()
   const titleId = useId()
-  const notesUrl = `https://github.com/niyongsheng/AudioScript/releases/tag/v${version}`
+  const notesUrl = SITE_URL
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

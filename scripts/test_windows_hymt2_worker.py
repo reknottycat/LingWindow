@@ -159,6 +159,39 @@ class WorkerTests(unittest.TestCase):
             path.write_bytes(b'modified')
             self.assertFalse(setup.verified(path, entry))
 
+    def test_explicit_copy_preserves_old_runtime_and_only_copies_verified_models(self):
+        import hashlib
+        import tempfile
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            old, new = Path(directory) / '旧模型', Path(directory) / '新模型'
+            old.mkdir()
+            (old / 'model.safetensors').write_bytes(b'fixture')
+            (old / 'runtime.json').write_text('{"python":"old"}', encoding='utf-8')
+            manifest = {'model.safetensors': dict(size=7, sha256=hashlib.sha256(b'fixture').hexdigest())}
+            with patch.object(setup, 'MANIFEST', manifest):
+                setup.copy_verified_model(old, new)
+            self.assertEqual((new / 'model.safetensors').read_bytes(), b'fixture')
+            self.assertEqual((old / 'model.safetensors').read_bytes(), b'fixture')
+            self.assertTrue((old / 'runtime.json').is_file())
+            self.assertFalse((new / 'runtime.json').exists())
+
+    def test_explicit_copy_rejects_unverified_or_same_directory_before_writing(self):
+        import hashlib
+        import tempfile
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            old, new = Path(directory) / 'old', Path(directory) / 'new'
+            old.mkdir()
+            (old / 'model.safetensors').write_bytes(b'changed')
+            manifest = {'model.safetensors': dict(size=7, sha256=hashlib.sha256(b'fixture').hexdigest())}
+            with patch.object(setup, 'MANIFEST', manifest):
+                with self.assertRaises(RuntimeError):
+                    setup.copy_verified_model(old, new)
+                with self.assertRaises(ValueError):
+                    setup.copy_verified_model(old, old)
+            self.assertFalse(new.exists())
+
 
 if __name__ == '__main__':
     unittest.main()

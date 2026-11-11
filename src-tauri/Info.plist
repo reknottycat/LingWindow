@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>CFBundleDisplayName</key>
+    <string>聆窗 LingWindow</string>
     <!--
       麦克风权限说明。
 
@@ -21,7 +23,7 @@
     </array>
 
     <key>NSMicrophoneUsageDescription</key>
-    <string>AudioScript 需要使用麦克风进行实时语音转写。音频仅在本机由离线模型处理，不会上传到任何服务器。</string>
+    <string>LingWindow 需要使用麦克风进行实时语音转写。音频仅在本机由离线模型处理，不会上传到任何服务器。</string>
 
     <!--
       系统声音录制权限说明（Core Audio Process Tap 走的就是这条）。
@@ -37,7 +39,7 @@
       所以授权与否只能靠「权限」页的功能自测来判定。
     -->
     <key>NSAudioCaptureUsageDescription</key>
-    <string>AudioScript 需要录制系统声音，才能把正在播放的视频或播客实时转成字幕。音频仅在本机由离线模型处理，不会上传到任何服务器。</string>
+    <string>LingWindow 需要录制系统声音，才能把正在播放的视频或播客实时转成字幕。音频仅在本机由离线模型处理，不会上传到任何服务器。</string>
 
     <!--
       系统语音（SpeechAnalyzer / SpeechTranscriber，macOS 26+）的权限说明。
@@ -46,6 +48,6 @@
       所以系统语音只在打包后的 .app 里可用。
     -->
     <key>NSSpeechRecognitionUsageDescription</key>
-    <string>AudioScript 需要使用语音识别，才能通过 macOS 系统语音转写正在播放的音频。识别在系统语音框架中完成，音频不会由本应用上传。</string>
+    <string>LingWindow 需要使用语音识别，才能通过 macOS 系统语音转写正在播放的音频。识别在系统语音框架中完成，音频不会由本应用上传。</string>
 </dict>
 </plist>

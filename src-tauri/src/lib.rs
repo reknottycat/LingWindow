@@ -96,8 +96,6 @@ pub fn run() {
         lifecycle::show_main(app);
     }));
 
-    builder = builder.plugin(tauri_plugin_aptabase::Builder::new(telemetry::APP_KEY).build());
-
     #[cfg(target_os = "macos")]
     {
         builder = builder.plugin(tauri_nspanel::init());
@@ -131,6 +129,7 @@ pub fn run() {
             let handle = app.handle().clone();
 
             handle.manage(log::LogDir(log::init(&handle)));
+            handle.manage(telemetry::init_error_reporting(&handle));
 
             if let Err(e) = session::init_emitter(&handle) {
                 tracing::error!("{e}");
@@ -165,8 +164,9 @@ pub fn run() {
             i18n::set_locale(i18n::Locale::from_language(saved_prefs.language));
             update_window_titles(&handle);
             env_info::log_startup(&saved_prefs);
-            telemetry::track(
+            telemetry::track_at(
                 &handle,
+                telemetry::Detail::Launch,
                 "app_started",
                 Some(serde_json::json!({
                     "asr_model_tier": saved_prefs.asr_model_tier.as_str(),
@@ -179,7 +179,9 @@ pub fn run() {
                     "onboarding_done": if saved_prefs.onboarding_done { 1 } else { 0 },
                 })),
             );
-            if let Err(e) = overlay::init(&handle, saved_prefs.overlay, saved_prefs.overlay_geometry) {
+            if let Err(e) =
+                overlay::init(&handle, saved_prefs.overlay, saved_prefs.overlay_geometry)
+            {
                 tracing::error!("悬浮窗初始化失败：{e}");
             }
 
@@ -193,131 +195,7 @@ pub fn run() {
 
             lifecycle::show_main(&handle);
 
-            if std::env::var("AUDIOSCRIPT_SMOKE_ROUTE").is_ok() {
-                let source = audio::source_from_env();
-                let device = config::normalize_device(std::env::var(audio::ENV_DEVICE).ok());
-
-                let args = serde_json::json!({
-                    "device": device,
-                    "source": source.as_str(),
-                    "config": {
-                        "translate": { "engine": "local-nmt", "sourceLang": "en" }
-                    }
-                });
-
-                tracing::info!("AUDIOSCRIPT_SMOKE_ROUTE 已设置，走真实命令路径启动");
-
-                for src in ["loopback", "mic"] {
-                    match commands::route(
-                        &handle,
-                        "audio_devices",
-                        &serde_json::json!({ "source": src }),
-                    ) {
-                        Ok(v) => {
-                            let arr = v.as_array().cloned().unwrap_or_default();
-                            let names: Vec<String> = arr
-                                .iter()
-                                .filter_map(|d| d["name"].as_str().map(str::to_owned))
-                                .collect();
-                            tracing::info!(
-                                source = src,
-                                count = arr.len(),
-                                names = ?names,
-                                "冒烟：设备枚举成功"
-                            );
-                        }
-                        Err(e) => {
-                            tracing::error!(source = src, "冒烟：设备枚举失败：{e}")
-                        }
-                    }
-                }
-
-                for (cmd, a) in [
-                    ("app_info", serde_json::json!({})),
-                    ("permission_status", serde_json::json!({})),
-                    (
-                        "open_system_settings",
-                        serde_json::json!({ "pane": "不存在的页" }),
-                    ),
-                    ("prefs_get", serde_json::json!({})),
-                    ("config_defaults", serde_json::json!({})),
-                    ("models_list", serde_json::json!({})),
-                    (
-                        "prefs_set",
-                        serde_json::json!({ "patch": { "theme": "dark" } }),
-                    ),
-                    ("autostart_get", serde_json::json!({})),
-                    ("autostart_set", serde_json::json!({ "enabled": false })),
-                    ("logs_export", serde_json::json!({})),
-                    ("shortcuts_get", serde_json::json!({})),
-                    (
-                        "shortcuts_set",
-                        serde_json::json!({
-                            "id": "overlay.toggleVisible",
-                            "accelerator": "CmdOrControl+Shift+H"
-                        }),
-                    ),
-                    (
-                        "shortcuts_set",
-                        serde_json::json!({ "id": "不存在的热键", "accelerator": "CmdOrControl+Shift+H" }),
-                    ),
-                ] {
-                    match commands::route(&handle, cmd, &a) {
-                        Ok(_) => tracing::info!(cmd, "冒烟：命令成功"),
-                        Err(e) => tracing::error!(cmd, "冒烟：命令失败：{e}"),
-                    }
-                }
-
-                let after = prefs::load(&handle);
-                tracing::info!(
-                    theme = ?after.theme,
-                    audio_source = %after.audio_source,
-                    source_lang = %after.source_lang,
-                    font_size = after.overlay.font_size,
-                    endpoint_ms = after.endpoint.trailing_silence_ms,
-                    "冒烟：改 theme 之后的偏好（其余字段应与改之前一致）"
-                );
-
-                match commands::route(&handle, "session_start", &args) {
-                    Ok(_) => tracing::info!("冒烟（真实命令路径）：session_start 成功"),
-                    Err(e) => {
-                        tracing::error!("冒烟（真实命令路径）：session_start 失败：{e}")
-                    }
-                }
-            }
-
-            if std::env::var("AUDIOSCRIPT_AUTOSTART").is_ok() {
-                let device = config::normalize_device(std::env::var(audio::ENV_DEVICE).ok());
-                let source = audio::source_from_env();
-                let translate_source = std::env::var("AUDIOSCRIPT_SOURCE_LANG")
-                    .ok()
-                    .filter(|v| v == "zh" || v == "en")
-                    .unwrap_or_else(|| "en".into());
-                tracing::info!(
-                    source = source.as_str(),
-                    device = ?device,
-                    "AUDIOSCRIPT_AUTOSTART 已设置，自动开始转写"
-                );
-                match session::start(
-                    &handle,
-                    config::SessionConfig {
-                        asr: config::AsrConfig::default(),
-                        translate: config::TranslateConfig {
-                            engine: std::env::var("AUDIOSCRIPT_TRANSLATE")
-                                .ok()
-                                .and_then(|v| config::TranslateEngine::parse(&v))
-                                .unwrap_or(config::TranslateEngine::LocalNmt),
-                            source_lang: translate_source.clone(),
-                            ..Default::default()
-                        },
-                    },
-                    source,
-                    audio::DeviceSelection::single(device),
-                ) {
-                    Ok(()) => tracing::info!("自动开始转写：成功"),
-                    Err(e) => tracing::error!("自动开始转写失败：{e}"),
-                }
-            }
+            // Packaged LingWindow never starts audio capture from ambient environment variables.
 
             Ok(())
         })
@@ -334,6 +212,7 @@ pub fn run() {
             tauri::RunEvent::Exit => {
                 translate::hymt2::terminate_worker();
                 telemetry::report_exit(app, "os");
+                telemetry::flush_error_reporting(app);
             }
             _ => {}
         });

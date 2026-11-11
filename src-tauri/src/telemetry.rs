@@ -1,51 +1,55 @@
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::OnceLock;
-use std::time::Instant;
-
+use serde::Deserialize;
 use serde_json::Value;
-use tauri::{AppHandle, Manager};
-use tauri_plugin_aptabase::EventTracker;
+use tauri::AppHandle;
 
-pub const APP_KEY: &str = "A-US-2179981546";
+use crate::config::AnalyticsTier;
 
-static STARTED_AT: OnceLock<Instant> = OnceLock::new();
-static EXIT_REPORTED: AtomicBool = AtomicBool::new(false);
+pub const ANALYTICS_TIER: AnalyticsTier = AnalyticsTier::UltraMinimal;
 
-pub fn track(app: &AppHandle, event: &str, props: Option<Value>) {
-    if !crate::prefs::load(app).analytics_enabled {
-        return;
-    }
-    if let Err(e) = app.track_event(event, props) {
-        tracing::debug!(event, "统计事件入队失败：{e}");
-    }
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Detail {
+    Launch,
+    Core,
+    Standard,
+    Full,
 }
 
-pub fn mark_start() {
-    let _ = STARTED_AT.set(Instant::now());
+// Compatibility entry points deliberately ignore legacy opt-in preferences.
+pub struct SentryGuard;
+
+pub fn init_error_reporting(_app: &AppHandle) -> SentryGuard {
+    SentryGuard
 }
 
-pub fn report_exit(app: &AppHandle, reason: &'static str) {
-    if EXIT_REPORTED.swap(true, Ordering::SeqCst) {
-        return;
-    }
-    let uptime_ms = STARTED_AT
-        .get()
-        .map(|t| t.elapsed().as_millis() as u64)
-        .unwrap_or(0);
-    let capturing = app
-        .try_state::<crate::session::SessionState>()
-        .is_some_and(|s| s.is_running());
-    track(
-        app,
-        "app_exited",
-        Some(serde_json::json!({
-            "reason": reason,
-            "uptime_bucket": duration_bucket(uptime_ms),
-            "capturing": if capturing { 1 } else { 0 },
-        })),
-    );
-    app.flush_events_blocking();
+pub fn flush_error_reporting(_app: &AppHandle) {}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FrontendError {
+    pub kind: String,
+    pub name: String,
+    pub message: String,
+    #[serde(default)]
+    pub stack: Option<String>,
+    #[serde(default)]
+    pub source: Option<String>,
+    #[serde(default)]
+    pub line: Option<u64>,
+    #[serde(default)]
+    pub column: Option<u64>,
+    #[serde(default)]
+    pub window: Option<String>,
 }
+
+pub fn capture_frontend_error(_app: &AppHandle, _report: FrontendError) {}
+
+pub fn track(_app: &AppHandle, _event: &str, _props: Option<Value>) {}
+
+pub fn track_at(_app: &AppHandle, _detail: Detail, _event: &str, _props: Option<Value>) {}
+
+pub fn mark_start() {}
+
+pub fn report_exit(_app: &AppHandle, _reason: &'static str) {}
 
 pub fn duration_bucket(ms: u64) -> &'static str {
     match ms {

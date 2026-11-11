@@ -1,0 +1,10 @@
+LingWindow (聆窗) is derived from AudioScript v0.7.0.
+Upstream project: https://github.com/niyongsheng/AudioScript
+Upstream author: Nico (niyongsheng)
+Upstream commit: c38becd4556e07791b600bff0d73b32c2c4ae06c
+
+The original MIT license and copyright are retained in LICENSE.
+Changes include HY-MT2 local translation, caption controls, independent branding,
+privacy isolation and independent update distribution.
+Model and third-party component licenses remain separate and must be respected.
+No upstream endorsement is implied.

@@ -1,11 +1,11 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "AudioScript HYMT2",
-  "version": "0.6.2",
-  "identifier": "com.audioscript.hymt2",
+  "productName": "LingWindow",
+  "version": "0.7.0",
+  "identifier": "com.lingwindow.desktop",
   "build": {
     "frontendDist": "../dist",
-    "devUrl": "http://localhost:5173",
+    "devUrl": "http://localhost:5183",
     "beforeDevCommand": "pnpm dev",
     "beforeBuildCommand": "pnpm build"
   },
@@ -15,7 +15,7 @@
       {
         "label": "main",
         "url": "index.html",
-        "title": "AudioScript",
+        "title": "聆窗 LingWindow",
         "width": 1100,
         "height": 720,
         "minWidth": 880,
@@ -81,7 +81,8 @@
       "resources/ru.lproj": "ru.lproj",
       "resources/it.lproj": "it.lproj",
       "resources/id.lproj": "id.lproj",
-      "resources/ar.lproj": "ar.lproj"
+      "resources/ar.lproj": "ar.lproj",
+      "resources/third-party": "third-party"
     }
   }
 }

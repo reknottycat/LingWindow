@@ -2,17 +2,30 @@ import { getCurrentWindow } from '@tauri-apps/api/window'
 import { StrictMode, useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import '@/shared/theme.css'
-import { useI18n } from '@/shared/i18n'
-import { EVENT, overlayConfigGet, sessionPreviewRendered, sessionStatus } from '@/shared/ipc'
+import { syncTrackingFromPrefs } from '@/shared/analytics'
+import {
+  EVENT,
+  formatCmdError,
+  type HotkeyInfo,
+  overlayConfigGet,
+  overlayConfigPatch,
+  overlayHide,
+  overlaySetMode,
+  sessionPreviewRendered,
+  sessionStatus,
+  shortcutsGet,
+} from '@/shared/ipc'
 import { initLocale } from '@/shared/locale'
-import { type OverlayConfig, OverlayMode, TaskStatus, TranslationState } from '@/shared/types'
+import { type OverlayConfig, OverlayDisplayMode, OverlayMode, TaskStatus, TranslationState } from '@/shared/types'
 import { useBroadcastSnapshot } from '@/shared/useBroadcastSnapshot'
 import { useTranscriptStream } from '@/shared/useTranscriptStream'
+import { OverlayToolbar, ResizeHandle } from './OverlayToolbar'
 import { StreamView } from './StreamView'
 
 const DEFAULT_CONFIG: OverlayConfig = {
   enable: true,
   mode: OverlayMode.Edit,
+  displayMode: OverlayDisplayMode.Bilingual,
   alwaysOnTop: true,
   opacity: 60,
   fontSize: 22,
@@ -25,6 +38,7 @@ const DEFAULT_CONFIG: OverlayConfig = {
 }
 
 void initLocale()
+void syncTrackingFromPrefs()
 
 function useCapturing(): boolean {
   const [capturing, setCapturing] = useState(false)
@@ -66,66 +80,61 @@ function OverlayApp() {
     }
   }, [preview])
   const [config, setConfig] = useState<OverlayConfig>(DEFAULT_CONFIG)
+  const [shortcuts, setShortcuts] = useState<HotkeyInfo[]>([])
+  const [busy, setBusy] = useState(false)
+  const pending = useRef(false)
+  const [error, setError] = useState<string | null>(null)
 
   useBroadcastSnapshot<OverlayConfig>(EVENT.overlayState, overlayConfigGet, setConfig)
+  useBroadcastSnapshot<HotkeyInfo[]>(EVENT.overlayShortcuts, shortcutsGet, setShortcuts)
+
+  async function perform(action: () => Promise<unknown>) {
+    if (pending.current) return
+    pending.current = true
+    setBusy(true)
+    setError(null)
+    try {
+      await action()
+    } catch (err) {
+      setError(formatCmdError(err))
+    } finally {
+      pending.current = false
+      setBusy(false)
+    }
+  }
 
   return (
-    <div className="fixed inset-0">
-      <StreamView
-        segments={segments}
-        fontSize={config.fontSize}
-        fontColor={config.fontColor}
-        opacity={config.opacity}
-        bgColor={config.bgColor}
-        glow={config.glow}
-        glowSpeed={config.glowSpeed}
-        glowWidth={config.glowWidth}
-        streaming={capturing}
+    <div className="fixed inset-0 flex flex-col overflow-hidden rounded-[var(--radius-panel)]">
+      <OverlayToolbar
+        config={config}
+        shortcuts={shortcuts}
+        busy={busy}
+        onHide={() => void perform(overlayHide)}
+        onLock={() => void perform(() => overlaySetMode(OverlayMode.Locked))}
+        onDisplayMode={(displayMode) => void perform(() => overlayConfigPatch({ displayMode }))}
+        onError={setError}
       />
-      {config.mode === OverlayMode.Edit && <EditChrome />}
+      {error && (
+        <div role="alert" className="shrink-0 bg-red-950 px-3 py-1 text-xs text-white">
+          {error}
+        </div>
+      )}
+      <div className="min-h-0 flex-1">
+        <StreamView
+          segments={segments}
+          displayMode={config.displayMode}
+          fontSize={config.fontSize}
+          fontColor={config.fontColor}
+          opacity={config.opacity}
+          bgColor={config.bgColor}
+          glow={config.glow}
+          glowSpeed={config.glowSpeed}
+          glowWidth={config.glowWidth}
+          streaming={capturing}
+        />
+      </div>
+      {config.mode === OverlayMode.Edit && <ResizeHandle onError={setError} />}
     </div>
-  )
-}
-
-function EditChrome() {
-  const { t } = useI18n()
-  const win = getCurrentWindow()
-
-  const drag = (e: React.MouseEvent) => {
-    if (e.button !== 0) return
-    e.preventDefault()
-    win.startDragging().catch((err) => console.error('拖动悬浮窗失败', err))
-  }
-
-  const resize = (e: React.MouseEvent) => {
-    if (e.button !== 0) return
-    e.preventDefault()
-    const direction = document.documentElement.dir === 'rtl' ? 'SouthWest' : 'SouthEast'
-    win.startResizeDragging(direction).catch((err) => console.error('缩放悬浮窗失败', err))
-  }
-
-  return (
-    <>
-      <div className="pointer-events-none absolute inset-0 rounded-[var(--radius-panel)] border border-[var(--color-accent)] border-dashed opacity-70" />
-
-      <button
-        type="button"
-        aria-label={t('overlayWindow.move')}
-        onMouseDown={drag}
-        className="absolute inset-x-0 top-0 z-10 flex h-4 cursor-move items-center justify-center border-0 bg-transparent p-0"
-      >
-        <span className="h-1 w-10 rounded-full bg-[var(--color-accent)] opacity-60" />
-      </button>
-
-      <button
-        type="button"
-        aria-label={t('overlayWindow.resize')}
-        onMouseDown={resize}
-        className="absolute end-0 bottom-0 z-10 size-5 cursor-nwse-resize border-0 bg-transparent p-0"
-      >
-        <span className="absolute end-1 bottom-1 h-2.5 w-2.5 border-[var(--color-accent)] border-e-2 border-b-2 opacity-70" />
-      </button>
-    </>
   )
 }
 

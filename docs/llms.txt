@@ -1,13 +1,13 @@
-# AudioScript 声稿
+# 聆窗 LingWindow
 
 > AudioScript（中文名「声稿」）是一款免费、MIT 开源的离线优先桌面应用：监听电脑正在播放的声音，把外语播客、视频与会议实时转成原文与译文的双语悬浮字幕。识别与翻译全部在本机完成，音频与文本不上传。
 
 AudioScript is a free, MIT-licensed, offline-first desktop app that listens to system audio and shows live bilingual subtitles (source text plus translation) for podcasts, videos, and meetings. Speech recognition and translation run locally; no audio or text is uploaded.
 
 - 官网：[audioscript.looplooptech.com](https://audioscript.looplooptech.com/)
-- 源码：[niyongsheng/AudioScript](https://github.com/niyongsheng/AudioScript)
-- 最新版本：0.6.2（2026-11-06）
-- 下载：[GitHub Releases](https://github.com/niyongsheng/AudioScript/releases/latest)
+- 源码：[niyongsheng/AudioScript](https://github.com/reknottycat/AudioScript-Windows)
+- 最新版本：0.7.0（2026-11-11）
+- 下载：[GitHub Releases](https://github.com/reknottycat/AudioScript-Windows/releases/latest)
 - 许可：MIT（应用本体）；可选模型许可见下表
 - 技术栈：Tauri 2 + Rust，sherpa-onnx 做语音识别，CTranslate2 做翻译
 
@@ -78,6 +78,6 @@ AudioScript is a free, MIT-licensed, offline-first desktop app that listens to s
 
 ## 更多文档
 
-- 产品规范：[docs/SPEC.md](https://github.com/niyongsheng/AudioScript/blob/main/docs/SPEC.md)
-- 设计说明：[docs/DESIGN.md](https://github.com/niyongsheng/AudioScript/blob/main/docs/DESIGN.md)
-- 发布记录：[GitHub Releases](https://github.com/niyongsheng/AudioScript/releases)
+- 产品规范：[docs/SPEC.md](https://github.com/reknottycat/AudioScript-Windows/blob/main/docs/SPEC.md)
+- 设计说明：[docs/DESIGN.md](https://github.com/reknottycat/AudioScript-Windows/blob/main/docs/DESIGN.md)
+- 发布记录：[GitHub Releases](https://github.com/reknottycat/AudioScript-Windows/releases)

@@ -26,8 +26,7 @@ interface Props {
 }
 
 export function GeneralPage({ focusPermissions, onFocusPermissionsHandled }: Props) {
-  const { theme, changeTheme, prefsReady, analyticsEnabled, setAnalyticsEnabled, language, changeLanguage, setError } =
-    useStore()
+  const { theme, changeTheme, language, changeLanguage, setError } = useStore()
   const { t } = useI18n()
 
   const [autostart, setAutostart] = useState<boolean | null>(null)
@@ -169,19 +168,12 @@ export function GeneralPage({ focusPermissions, onFocusPermissionsHandled }: Pro
         <PermissionPanel />
       </div>
 
-      <SettingsGroup title={t('general.privacy')} footer={t('general.privacyFooter')}>
+      <SettingsGroup title={t('general.privacy')}>
         <SettingsRow
           icon="shield"
           title={t('general.analytics')}
           description={t('general.analyticsDescription')}
-          control={
-            <Switch
-              label={t('general.analytics')}
-              checked={analyticsEnabled}
-              disabled={!prefsReady}
-              onChange={setAnalyticsEnabled}
-            />
-          }
+          control={<Switch label={t('general.analytics')} checked={false} disabled onChange={() => {}} />}
         />
       </SettingsGroup>
 

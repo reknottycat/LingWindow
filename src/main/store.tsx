@@ -1,8 +1,10 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { setTrackingEnabled, track } from '@/shared/analytics'
+import { setTrackingEnabled, setTrackingTier, track } from '@/shared/analytics'
 import { t } from '@/shared/i18n'
 import {
   type AppInfo,
+  type AppRef,
+  type AudioProcessInfo,
   AudioSourceKind,
   type AudioStatus,
   appInfo,
@@ -10,6 +12,7 @@ import {
   type CmdPermissionError,
   EngineType,
   EVENT,
+  audioProcesses as fetchAudioProcesses,
   formatCmdError,
   type HotkeyFailure,
   type HotkeyInfo,
@@ -19,9 +22,10 @@ import {
   type MacSpeechStatus,
   macSpeechStatus,
   type OverlayConfig,
+  type OverlayConfigPatch,
   on,
   overlayConfigGet,
-  overlayConfigSet,
+  overlayConfigPatch,
   overlayIsVisible,
   overlayToggle,
   type PermissionSnapshot,
@@ -66,6 +70,7 @@ interface Store {
   device: string
   mixMicDevice: string
   mixSystemDevice: string
+  appTargets: AppRef[]
   translateEngine: TranslateEngine
   asrEngine: EngineType
   sourceLang: string
@@ -84,6 +89,9 @@ interface Store {
   devices: InputDevice[]
   mixMicDevices: InputDevice[]
   mixSystemDevices: InputDevice[]
+  audioProcesses: AudioProcessInfo[]
+  processesLoading: boolean
+  processError: string | null
   deviceError: string | null
 
   overlayCfg: OverlayConfig | null
@@ -128,6 +136,7 @@ interface Store {
   setDevice: (v: string) => void
   setMixMicDevice: (v: string) => void
   setMixSystemDevice: (v: string) => void
+  setAppTargets: (v: AppRef[]) => void
   setTranslateEngine: (v: TranslateEngine) => void
   setAsrEngine: (v: EngineType) => void
   setEngineAndDirection: (engine: TranslateEngine, source: string, target: string, script: ZhScript) => void
@@ -135,15 +144,18 @@ interface Store {
   changeTheme: (v: Theme) => Promise<void>
   changeLanguage: (v: Language) => Promise<void>
   setEndpoint: (v: EndpointConfig) => Promise<void>
-  updateOverlay: (patch: Partial<OverlayConfig>) => Promise<void>
+  updateOverlay: (patch: OverlayConfigPatch) => Promise<void>
   toggleOverlay: () => Promise<void>
   refreshDevices: () => Promise<void>
+  refreshProcesses: () => Promise<void>
   refreshHotkeys: () => Promise<void>
 }
 
 const STOP_TIMEOUT_MS = 8_000
 
 const START_TIMEOUT_MS = 60_000
+
+const PROCESS_REFRESH_MIN_MS = 500
 
 const Ctx = createContext<Store | null>(null)
 
@@ -161,6 +173,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [device, setDevice] = useState('')
   const [mixMicDevice, setMixMicDevice] = useState('')
   const [mixSystemDevice, setMixSystemDevice] = useState('')
+  const [appTargets, setAppTargetsState] = useState<AppRef[]>([])
   const [translateEngine, setTranslateEngine] = useState<TranslateEngine>(TranslateEngine.LocalNmt)
   const [asrEngine, setAsrEngine] = useState<EngineType>(EngineType.LocalStreaming)
   const [sourceLang, setSourceLang] = useState('en')
@@ -181,6 +194,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [devices, setDevices] = useState<InputDevice[]>([])
   const [mixMicDevices, setMixMicDevices] = useState<InputDevice[]>([])
   const [mixSystemDevices, setMixSystemDevices] = useState<InputDevice[]>([])
+  const [audioProcesses, setAudioProcesses] = useState<AudioProcessInfo[]>([])
+  const [processesLoading, setProcessesLoading] = useState(false)
+  const [processError, setProcessError] = useState<string | null>(null)
   const [devicesLoading, setDevicesLoading] = useState(false)
   const [deviceError, setDeviceError] = useState<string | null>(null)
 
@@ -191,7 +207,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [hotkeyProblems, setHotkeyProblems] = useState<HotkeyFailure[]>([])
 
   const [onboardingDone, setOnboardingDone] = useState(false)
-  const [analyticsEnabled, setAnalyticsEnabledState] = useState(false)
+  const [analyticsEnabled, setAnalyticsEnabledState] = useState(true)
   const [permissions, setPermissions] = useState<PermissionSnapshot | null>(null)
   const [speechStatus, setSpeechStatus] = useState<MacSpeechStatus | null>(null)
   const [systemAudioProbe, setSystemAudioProbe] = useState<SystemAudioProbe | null>(null)
@@ -218,7 +234,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     appInfo()
-      .then(setInfo)
+      .then((i) => {
+        setInfo(i)
+        setTrackingTier(i.analyticsTier)
+      })
       .catch((e) => setError(formatCmdError(e)))
     void initLocale()
     hotkeyFailures()
@@ -277,6 +296,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (p.deviceId) setDevice(p.deviceId)
         if (p.mixMicDeviceId) setMixMicDevice(p.mixMicDeviceId)
         if (p.mixSystemDeviceId) setMixSystemDevice(p.mixSystemDeviceId)
+        setAppTargetsState(p.appTargets ?? [])
       })
       .catch(() => {})
       .finally(() => setPrefsReady(true))
@@ -383,7 +403,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [patchPrefs],
   )
 
+  const devicesLoadingRef = useRef(false)
   const refreshDevices = useCallback(async () => {
+    if (audioSource === AudioSourceKind.App) {
+      setDevices([])
+      setDeviceError(null)
+      setDevicesLoading(false)
+      return
+    }
+    if (devicesLoadingRef.current) return
+    devicesLoadingRef.current = true
     setDevicesLoading(true)
     const load = async (
       source: AudioSourceKind,
@@ -419,14 +448,40 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       setDeviceError(formatCmdError(e))
     } finally {
+      devicesLoadingRef.current = false
       setDevicesLoading(false)
     }
   }, [audioSource])
 
+  const processesLoadingRef = useRef(false)
+  const refreshProcesses = useCallback(async () => {
+    if (processesLoadingRef.current) return
+    processesLoadingRef.current = true
+    setProcessesLoading(true)
+    const started = Date.now()
+    let ok = false
+    try {
+      setAudioProcesses(await fetchAudioProcesses())
+      setProcessError(null)
+      ok = true
+    } catch (e) {
+      setAudioProcesses([])
+      setProcessError(formatCmdError(e))
+    } finally {
+      if (ok) {
+        const remaining = PROCESS_REFRESH_MIN_MS - (Date.now() - started)
+        if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining))
+      }
+      processesLoadingRef.current = false
+      setProcessesLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     if (!prefsReady) return
     refreshDevices()
-  }, [prefsReady, refreshDevices])
+    if (audioSource === AudioSourceKind.App) void refreshProcesses()
+  }, [prefsReady, audioSource, refreshDevices, refreshProcesses])
 
   const toggleSession = useCallback(async () => {
     if (pendingRef.current) return
@@ -440,10 +495,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setStatus(await withTimeout(sessionStop(), STOP_TIMEOUT_MS, t('error.stopTimeout')))
         setActiveDevice(null)
       } else {
+        if (audioSource === AudioSourceKind.App && appTargets.length === 0) {
+          setError(t('audio.appRequired'))
+          return
+        }
         const selection =
           audioSource === AudioSourceKind.Mix
             ? { mixMicDeviceId: mixMicDevice, mixSystemDeviceId: mixSystemDevice }
-            : { device }
+            : {
+                device,
+                appTargets: audioSource === AudioSourceKind.App ? appTargets : [],
+              }
         setStatus(
           await withTimeout(
             sessionStart(selection, translateEngine, sourceLang, targetLang, zhScript, audioSource),
@@ -486,6 +548,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     device,
     mixMicDevice,
     mixSystemDevice,
+    appTargets,
     translateEngine,
     asrEngine,
     sourceLang,
@@ -501,10 +564,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const updateOverlay = useCallback(
-    async (patch: Partial<OverlayConfig>) => {
+    async (patch: OverlayConfigPatch) => {
       if (!overlayCfg) return
       try {
-        setOverlayCfg(await overlayConfigSet({ ...overlayCfg, ...patch }))
+        setOverlayCfg(await overlayConfigPatch(patch))
       } catch (e) {
         setError(formatCmdError(e))
       }
@@ -568,6 +631,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     (v: string) => {
       setMixSystemDevice(v)
       void patchPrefs({ mixSystemDeviceId: v })
+    },
+    [patchPrefs],
+  )
+
+  const changeAppTargets = useCallback(
+    (v: AppRef[]) => {
+      setAppTargetsState(v)
+      void patchPrefs({ appTargets: v })
+      const value = v.length === 0 ? 'none' : v.length === 1 ? 'single' : 'multi'
+      track('setting_changed', { key: 'app_target', value })
     },
     [patchPrefs],
   )
@@ -708,6 +781,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       device,
       mixMicDevice,
       mixSystemDevice,
+      appTargets,
       translateEngine,
       asrEngine,
       sourceLang,
@@ -724,6 +798,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       devices,
       mixMicDevices,
       mixSystemDevices,
+      audioProcesses,
+      processesLoading,
+      processError,
       deviceError,
       overlayCfg,
       overlayVisible,
@@ -752,6 +829,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setDevice: changeDevice,
       setMixMicDevice: changeMixMicDevice,
       setMixSystemDevice: changeMixSystemDevice,
+      setAppTargets: changeAppTargets,
       setTranslateEngine: changeTranslateEngine,
       setAsrEngine: changeAsrEngine,
       setEngineAndDirection: changeEngineAndDirection,
@@ -762,6 +840,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updateOverlay,
       toggleOverlay,
       refreshDevices,
+      refreshProcesses,
       refreshHotkeys,
     }),
     [
@@ -780,6 +859,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       device,
       mixMicDevice,
       mixSystemDevice,
+      appTargets,
       translateEngine,
       asrEngine,
       sourceLang,
@@ -795,6 +875,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       devices,
       mixMicDevices,
       mixSystemDevices,
+      audioProcesses,
+      processesLoading,
+      processError,
       deviceError,
       overlayCfg,
       overlayVisible,
@@ -821,6 +904,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       changeDevice,
       changeMixMicDevice,
       changeMixSystemDevice,
+      changeAppTargets,
       changeTranslateEngine,
       changeAsrEngine,
       changeEngineAndDirection,
@@ -831,6 +915,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updateOverlay,
       toggleOverlay,
       refreshDevices,
+      refreshProcesses,
       refreshHotkeys,
     ],
   )

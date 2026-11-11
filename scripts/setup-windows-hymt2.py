@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import time
@@ -52,6 +53,28 @@ def digest(path):
 
 def verified(path, entry):
     return path.is_file() and path.stat().st_size == entry['size'] and digest(path) == entry['sha256']
+
+
+def copy_verified_model(source, directory):
+    """Explicitly copy only official model files; never move an old installation."""
+    source, directory = source.resolve(), directory.resolve()
+    if source == directory:
+        raise ValueError('旧模型目录与新目录必须不同')
+    for name, entry in MANIFEST.items():
+        if not verified(source / name, entry):
+            raise RuntimeError(f'旧模型未通过完整性校验：{name}，未复制任何文件')
+    directory.mkdir(parents=True, exist_ok=True)
+    for name, entry in MANIFEST.items():
+        target = directory / name
+        if verified(target, entry):
+            continue
+        partial = target.with_name(target.name + '.copy.partial')
+        shutil.copyfile(source / name, partial)
+        if not verified(partial, entry):
+            partial.unlink(missing_ok=True)
+            raise RuntimeError(f'复制后校验失败：{name}')
+        os.replace(partial, target)
+    print('已复制并校验模型。旧目录未修改；旧 Python 环境和配置未复制。', flush=True)
 
 
 def download_large(url, partial, total):
@@ -119,10 +142,14 @@ def main():
     parser.add_argument('--venv-dir', type=Path, help='默认 MODEL_DIR/.venv，不修改全局 Python')
     parser.add_argument('--cpu', action='store_true', help='显式启用 CPU，不保证实时性能')
     parser.add_argument('--download-only', action='store_true', help='只下载并校验模型，不创建 runtime.json')
+    parser.add_argument('--copy-model-from', type=Path,
+                        help='显式从旧 Windows 模型目录复制已校验模型；不删除旧目录，不复制运行时或配置')
     args = parser.parse_args()
     if sys.version_info < (3, 10):
         parser.error('需要 Python 3.10 或更新版本，建议 3.12')
     directory = args.model_dir.expanduser().resolve()
+    if args.copy_model_from:
+        copy_verified_model(args.copy_model_from.expanduser(), directory)
     download_model(directory)
     if args.download_only:
         return

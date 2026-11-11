@@ -1,72 +1,66 @@
-> Windows HY-MT2 定制版：请先阅读 [Windows 安装与实时字幕验收](docs/WINDOWS-START-HERE.zh-CN.md)。基于官方 v0.6.2，模型单独初始化；不是上游官方发行。
+# 聆窗 LingWindow
 
-<p align="center">
-  <a href="README.md">English</a> &nbsp;|&nbsp; <strong>简体中文</strong>
-</p>
+[English](README.md) · [隐私说明](docs/PRIVACY.md) · [第三方许可](src-tauri/resources/third-party/THIRD_PARTY_NOTICES.md)
 
-<div align="center">
+面向 macOS 与 Windows 的本地语音转写、翻译和悬浮字幕应用，重点支持俄语、英语到中文的使用场景。
 
-<img src="src-tauri/icons/128x128@2x.png" width="128" height="128" alt="AudioScript">
+聆窗基于 [AudioScript](https://github.com/niyongsheng/AudioScript) **v0.7.0**，感谢原作者 **Nico（niyongsheng）** 和所有贡献者开放源码。本项目保留原作者版权与 MIT 许可，是独立衍生版，不代表原作者或 AudioScript 官方。
 
-<h1>AudioScript 声稿</h1>
-
-<p>监听系统声音输出，把外语播客、视频与会议实时转成「原文 + 译文」双语悬浮字幕。识别与翻译全部在本机完成，支持 29+ 种语言。macOS 26+ 还可使用系统翻译。</p>
-
-<p>
-  <a href="https://audioscript.looplooptech.com/">官网</a> ·
-  <a href="https://audioscript.looplooptech.com/#download">下载</a>
-</p>
-
-<p>
-  <img src="https://img.shields.io/badge/macOS-14.2%2B-111111?style=flat-square&logo=apple&logoColor=white" alt="macOS 14.2+">
-  <img src="https://img.shields.io/badge/Windows-10%2B-111111?style=flat-square&logo=windows&logoColor=white" alt="Windows 10+">
-  <img src="https://img.shields.io/badge/Ubuntu-24-111111?style=flat-square&logo=ubuntu&logoColor=white" alt="Ubuntu 24">
-  <img src="https://img.shields.io/badge/Tauri-2-24C8DB?style=flat-square&logo=tauri&logoColor=white" alt="Tauri 2">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-555555?style=flat-square" alt="MIT"></a>
-</p>
-
-</div>
-
-<br>
-
-https://github.com/user-attachments/assets/b1f88a82-b3fe-4721-8736-af6a9e4d828e
+上游基线：[`c38becd4556e07791b600bff0d73b32c2c4ae06c`](https://github.com/niyongsheng/AudioScript/commit/c38becd4556e07791b600bff0d73b32c2c4ae06c)。
 
 ## 功能
 
-- **采集**：系统声音 / 麦克风 / 两者混合。
-- **常驻**：托盘、关窗不退出、单实例、开机自启。
-- **识别**：内置 Zipformer 流式双语识别；可选 X-ASR、Nemotron 3.5、Qwen3-ASR。
-- **翻译**：内置 Opus-MT 中英互译；可选 LMT-60、NLLB-200。
-- **悬浮窗**：双语对照，字号 / 不透明度 / 行数 / 彩色流光边框。
-- **国际化**：zh-CN / zh-TW / en / ja / ko / fr / de / es / pt-BR / ru / it / id / ar。
+- 系统声音、麦克风、混合及指定应用采集，具体可用性取决于系统与权限。音量预览必须主动点击开始，浏览设置页不会自动采音。
+- 沿用 AudioScript 的识别框架，可选择 Nemotron 3.5、Qwen3-ASR 等模型。俄语需要支持俄语的模型，内置中英 Zipformer 不支持俄语。
+- HY-MT2 本地翻译：Apple Silicon 使用 MLX 4-bit；Windows 使用独立 Python / Transformers 运行环境，可配置 NVIDIA CUDA。当前 HY-MT2 适配方向为俄语或英语到中文。
+- 保留 LMT、OPUS-MT 等原有翻译选项。模型能力与许可各自独立。
+- 字幕浮窗提供原文、双语、译文三档显示，以及工具栏、隐藏、拖动区域和显示偏好保存。
+- 无声文字测试走真实翻译队列与浮窗，不播放声音、不录音、不调用语音识别。它可以检查翻译配置，不能替代语音端到端测试。
+- 13 种界面语言。独立应用标识 `com.lingwindow.desktop`，与原版的数据目录隔离。
 
-## 隐私
+## 安装与模型
 
-* 语音识别与翻译全部在本机完成，离线可用。
-* Aptabase 匿名使用统计，可在「通用 → 隐私」中关闭。
+以[本项目仓库](https://github.com/reknottycat/AudioScript-Windows)中实际发布的版本、平台与校验和为准。源码存在或 CI 启动不代表安装包已经发布。请不要把 AudioScript 官网的原版下载当成聆窗更新。
 
-## 构建
+- **macOS**：Apple Silicon，macOS 14.2 或更新。HY-MT2 需要另外准备本地 MLX 模型和运行环境，见 [Mac 配置说明](docs/HYMT2-LOCAL.md)。
+- **Windows**：x64，见 [安装与模型初始化](docs/WINDOWS-START-HERE.zh-CN.md)及[构建与验证](docs/WINDOWS-HYMT2-BUILD.md)。CUDA 不可用会明确报错；CPU 模式需显式选择，速度不保证实时。
+- 模型与 Python 环境不放进源码仓库。安装包可包含基础中英语音/翻译模型；HY-MT2、Nemotron 等可选模型另行安装。
+- 优先使用已核对文件与 SHA256 的国内模型源。下载仍需要网络；模型准备好后，本地识别与翻译可离线运行。
+- 新应用可能需要重新申请操作系统录音权限。保留旧应用和数据，不自动删除或覆盖它们。
 
-```bash
-pnpm install          # 依赖 + ASR 模型与 Silero VAD（≈ 59 MB）
-pnpm fetch:mt         # 模型拉取
-pnpm tauri dev        # 开发模式
-pnpm tauri build      # 打包
+个人构建可能只有临时签名，或没有发行者签名、公证。校验和只能验证文件完整性，不能证明软件安全；不要关闭全局系统防护来运行未知副本。
+
+## 隐私与更新
+
+本版禁用 Aptabase 与 Sentry 上报，旧统计开关也不能启用收集。不会自动上传音频、字幕或诊断日志。主动下载模型、打开网页等操作仍会访问网络，完整边界见[隐私说明](docs/PRIVACY.md)。
+
+本版不使用上游自动更新服务或签名公钥，更新通过自己的发布渠道手动进行。
+
+## 开发
+
+需要 Node.js 22、pnpm 10.29.2、Rust 和目标平台构建工具。初次获取依赖与模型需要网络和磁盘空间。
+
+```sh
+pnpm install --frozen-lockfile
+pnpm fetch:mt
+pnpm gen:types
+pnpm typecheck
+pnpm build
+cargo test --manifest-path src-tauri/Cargo.toml --release --locked --lib
+pnpm tauri build
 ```
 
-## 联系我
+Apple Silicon 的具体工具链、运行环境与构建配置见 [HY-MT2 文档](docs/HYMT2-LOCAL.md)。Windows 使用其专用说明，尤其注意 MSVC、静态 CRT、Python 和 CUDA 版本。
 
-- X: [@niyongsheng](https://x.com/niyongsheng)
-- E‑mail: niyongsheng@Outlook.com
+## 验证边界
 
-## 许可证
+- 编译、单元测试、协议测试、真实模型推理、桌面交互和语音端到端测试是不同阶段，以每个发布版本附带的记录为准。
+- 文字提交到字幕的时间不包含说话、分句等待或语音识别，不标为语音端到端延迟。
+- 托管 Windows CI 不验证真实 GPU、系统声音、快捷键或浮窗像素；不能据此承诺指定显卡性能。
+- 拖动、全屏覆盖、权限与应用音频支持受操作系统和窗口环境影响。未完成的真机项目应明确保留为未验证。
 
-- [MIT](LICENSE)  
+## 许可与致谢
 
-- [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) Apache-2.0、[X-ASR](https://huggingface.co/GilgameshWind/X-ASR-zh-en) Apache-2.0、[Nemotron 3.5 ASR](https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b) OpenMDW-1.1（可选）、[Qwen3-ASR](https://huggingface.co/Qwen/Qwen3-ASR-0.6B) Apache-2.0、[Silero VAD](https://github.com/snakers4/silero-vad) MIT、[CTranslate2](https://github.com/OpenNMT/CTranslate2) MIT、[opus-mt](https://github.com/Helsinki-NLP)、[LMT-60](https://huggingface.co/NiuTrans/LMT-60-0.6B) Apache-2.0（可选）、[NLLB-200](https://huggingface.co/facebook/nllb-200-distilled-600M) CC-BY-NC-4.0（可选）、[translation-rs](https://github.com/doom-fish/translation-rs) MIT OR Apache-2.0、[flexaudio](https://crates.io/crates/flexaudio) MIT、[tauri-nspanel](https://github.com/ahkohd/tauri-nspanel) MIT OR Apache-2.0
+应用源码沿用 [MIT](LICENSE)，原作者署名保留在 [NOTICE](NOTICE)。感谢 AudioScript、Tauri、sherpa-onnx、MLX、CTranslate2 及所用模型的维护者。
 
-[![Star History Chart](https://api.star-history.com/svg?repos=niyongsheng/AudioScript&type=Date)](https://star-history.com/#niyongsheng/AudioScript&Date)
-
-## 本地 HY-MT2 适配
-
-此源码副本增加 Apple Silicon 专用 HY-MT2 本地翻译后端，以及不录音、不播放的文字到真实浮窗测试。参见[本地安装与验证](docs/HYMT2-LOCAL.md)。已有模型偏好与 LMT 选项保留。
+模型和依赖不因本仓库的 MIT 许可而改变授权。特别是 OPUS 中文到英文模型需保留 CC-BY-4.0 署名，NLLB 的可选模型有 CC-BY-NC-4.0 限制。分发和使用前请查阅[第三方说明](src-tauri/resources/third-party/THIRD_PARTY_NOTICES.md)以及对应模型卡。

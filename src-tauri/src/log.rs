@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
-pub const LOG_FILE_PREFIX: &str = "audioscript.log";
+pub const LOG_FILE_PREFIX: &str = "lingwindow.log";
 
 #[derive(Debug)]
 pub struct LogGuard(#[allow(dead_code)] tracing_appender::non_blocking::WorkerGuard);
@@ -12,7 +12,7 @@ pub struct LogGuard(#[allow(dead_code)] tracing_appender::non_blocking::WorkerGu
 pub struct LogDir(pub PathBuf);
 
 pub fn init(app: &AppHandle) -> PathBuf {
-    let fallback = std::env::temp_dir().join("audioscript-logs");
+    let fallback = std::env::temp_dir().join("lingwindow-logs");
 
     let dir = app
         .path()

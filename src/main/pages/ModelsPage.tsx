@@ -1,5 +1,5 @@
 import { open } from '@tauri-apps/plugin-dialog'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useStore } from '@/main/store'
 import { useModels } from '@/main/useModels'
 import { track } from '@/shared/analytics'
@@ -17,7 +17,7 @@ import {
   openUrl,
   sessionPreviewText,
 } from '@/shared/ipc'
-import { DOWNLOAD_URL } from '@/shared/links'
+import { MODEL_DOWNLOAD_URL } from '@/shared/links'
 import { formatBytes, modelLanguageLabel, modelStatusBadge, modelTitle } from '@/shared/models'
 import { ModelKind, TaskStatus } from '@/shared/types'
 import { Alert } from '@/ui/Alert'
@@ -58,6 +58,20 @@ export function ModelsPage() {
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null)
   const [confirmResetDir, setConfirmResetDir] = useState(false)
   const [dirBusy, setDirBusy] = useState(false)
+  const [dismissedInitialError, setDismissedInitialError] = useState<string | null>(null)
+  const [dismissedBrokenId, setDismissedBrokenId] = useState<string | null>(null)
+  const [dismissedCapturing, setDismissedCapturing] = useState(false)
+
+  const brokenSelected = list ? [...list.asr, ...list.mt].find((m) => m.selected && !m.complete) : undefined
+  const brokenSelectedId = brokenSelected?.id
+
+  useEffect(() => {
+    if (!brokenSelectedId) setDismissedBrokenId(null)
+  }, [brokenSelectedId])
+
+  useEffect(() => {
+    if (!capturing) setDismissedCapturing(false)
+  }, [capturing])
   const [previewText, setPreviewText] = useState('The system translates locally without sending audio to a server.')
   const [previewBusy, setPreviewBusy] = useState(false)
   const [previewResult, setPreviewResult] = useState<{ translation: string; eventMs: number } | null>(null)
@@ -80,7 +94,7 @@ export function ModelsPage() {
   }
 
   function openOfflineModels() {
-    void openUrl(DOWNLOAD_URL).catch((e) => setError(formatCmdError(e)))
+    void openUrl(MODEL_DOWNLOAD_URL).catch((e) => setError(formatCmdError(e)))
   }
 
   async function download(modelId: string) {
@@ -155,10 +169,11 @@ export function ModelsPage() {
   if (!list) {
     return (
       <Page title={t('models.title')}>
-        {loadError ? (
+        {loadError && dismissedInitialError !== loadError ? (
           <Alert
             tone="error"
             title={t('models.loadFailed')}
+            onDismiss={() => setDismissedInitialError(loadError)}
             actions={
               <Button size="sm" onClick={retry}>
                 {t('common.retry')}
@@ -175,7 +190,6 @@ export function ModelsPage() {
   }
 
   const connected = list.userRoot !== undefined
-  const brokenSelected = [...list.asr, ...list.mt].find((m) => m.selected && !m.complete)
 
   return (
     <Page title={t('models.title')}>
@@ -194,14 +208,18 @@ export function ModelsPage() {
         </Alert>
       )}
 
-      {brokenSelected && (
-        <Alert tone="error" title={t('models.brokenSelectedTitle', { title: modelTitle(brokenSelected, t) })}>
+      {brokenSelected && dismissedBrokenId !== brokenSelected.id && (
+        <Alert
+          tone="error"
+          title={t('models.brokenSelectedTitle', { title: modelTitle(brokenSelected, t) })}
+          onDismiss={() => setDismissedBrokenId(brokenSelected.id)}
+        >
           {brokenSelected.bundled ? t('models.brokenBundled') : t('models.brokenDownloaded')}
         </Alert>
       )}
 
-      {capturing && (
-        <Alert tone="info" title={t('models.capturingTitle')}>
+      {capturing && !dismissedCapturing && (
+        <Alert tone="info" title={t('models.capturingTitle')} onDismiss={() => setDismissedCapturing(true)}>
           {t('models.capturingBody')}
         </Alert>
       )}

@@ -191,7 +191,7 @@
         }
       },
       "archive": {
-        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-nemotron-3.5-asr-streaming-0.6b-560ms-int8-2026-06-11.tar.bz2",
+        "url": "https://modelscope.cn/models/zyaztec/sherpa-onnx-nemotron-3.5-asr-streaming-0.6b-560ms-int8-2026-06-11/resolve/master/sherpa-onnx-nemotron-3.5-asr-streaming-0.6b-560ms-int8-2026-06-11.tar.bz2",
         "format": "tar-bz2",
         "sha256": "c6bf5e0df765f9d5b43bc9e0536d4b4b3e7d40bdf5ecf13e45f134c51c05ae3a",
         "sizeBytes": 475271763,
@@ -603,7 +603,7 @@
       "kind": "mt",
       "tier": "hymt2",
       "title": "HY-MT2 1.8B · Local",
-      "description": "Windows 使用官方 BF16 模型及 CUDA；Mac 使用 MLX。仅英语/俄语→中文，模型与运行时单独初始化。",
+      "description": "本地英语/俄语→中文翻译：Windows 使用 CUDA BF16，Apple Silicon 使用 MLX 4-bit；需按平台安装对应模型和独立 Python 运行时。",
       "bundled": false,
       "downloadable": false,
       "multilingual": true,
@@ -629,18 +629,18 @@
         }
       },
       "sizes": {
-        "installedBytes": 4086800000
+        "installedBytes": 1010000000
       },
       "licenses": [
         {
           "component": "Tencent HY-MT2-1.8B",
           "license": "Apache-2.0",
-          "licenseUrl": "https://modelscope.cn/models/Tencent-Hunyuan/Hy-MT2-1.8B/resolve/master/LICENSE.txt",
+          "licenseUrl": "https://modelscope.cn/models/mlx-community/Hy-MT2-1.8B-4bit/resolve/master/LICENSE.txt",
           "requiresAttribution": true,
           "attribution": "Tencent Hunyuan"
         }
       ],
-      "sourceUrl": "https://modelscope.cn/models/Tencent-Hunyuan/Hy-MT2-1.8B"
+      "sourceUrl": "https://modelscope.cn/models/mlx-community/Hy-MT2-1.8B-4bit"
     }
   ]
 }

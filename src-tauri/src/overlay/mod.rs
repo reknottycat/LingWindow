@@ -10,7 +10,10 @@ use std::sync::Mutex;
 
 use tauri::{AppHandle, Emitter, Manager, WebviewWindow};
 
-use crate::config::{OverlayConfig, OverlayMode, MAX_OVERLAY_HEIGHT, MIN_OVERLAY_HEIGHT};
+use crate::config::{
+    OverlayConfig, OverlayConfigPatch, OverlayMode, MAX_OVERLAY_HEIGHT, MIN_OVERLAY_HEIGHT,
+    OVERLAY_TOOLBAR_HEIGHT,
+};
 use crate::i18n::{tf, tr, Key};
 
 pub const LABEL: &str = "overlay";
@@ -231,13 +234,21 @@ pub fn toggle(app: &AppHandle) -> Result<bool, String> {
     let now = !visible;
     set_enable(app, now);
     broadcast_visibility(app, now);
-    crate::telemetry::track(
+    crate::telemetry::track_at(
         app,
+        crate::telemetry::Detail::Full,
         "overlay_toggled",
         Some(serde_json::json!({ "visible": if now { 1 } else { 0 } })),
     );
 
     Ok(now)
+}
+
+pub fn hide(app: &AppHandle) -> Result<(), String> {
+    Frame::get(app)?.hide(app)?;
+    set_enable(app, false);
+    broadcast_visibility(app, false);
+    Ok(())
 }
 
 fn set_enable(app: &AppHandle, enable: bool) {
@@ -301,6 +312,24 @@ pub fn config(app: &AppHandle) -> OverlayConfig {
     app.state::<OverlayState>().config()
 }
 
+pub fn patch_config(app: &AppHandle, patch: OverlayConfigPatch) -> Result<OverlayConfig, String> {
+    let state = app.state::<OverlayState>();
+    let (previous, applied) = {
+        let mut cfg = state.config.lock().expect("overlay config mutex poisoned");
+        let previous = cfg.clone();
+        let applied = patch.apply(previous.clone());
+        *cfg = applied.clone();
+        (previous, applied)
+    };
+    if previous.font_size != applied.font_size || previous.max_lines != applied.max_lines {
+        fit_height_to_lines(app, &applied);
+    }
+    let saved = crate::prefs::update(app, |p| p.overlay = patch.apply(p.overlay.clone()));
+    broadcast(app, &state);
+    saved?;
+    Ok(state.config())
+}
+
 pub fn set_config(app: &AppHandle, cfg: OverlayConfig) -> Result<OverlayConfig, String> {
     let cfg = cfg.sanitized();
     let state = app.state::<OverlayState>();
@@ -333,7 +362,9 @@ const OVERLAY_LINE_HEIGHT: f64 = 1.35;
 const OVERLAY_VERTICAL_PADDING: f64 = 16.0;
 
 fn lines_height(font_size: u8, max_lines: u16) -> f64 {
-    font_size as f64 * OVERLAY_LINE_HEIGHT * max_lines as f64 + OVERLAY_VERTICAL_PADDING
+    font_size as f64 * OVERLAY_LINE_HEIGHT * max_lines as f64
+        + OVERLAY_VERTICAL_PADDING
+        + OVERLAY_TOOLBAR_HEIGHT as f64
 }
 
 fn fit_height_to_lines(app: &AppHandle, cfg: &OverlayConfig) {
@@ -543,7 +574,7 @@ mod tests {
 
     #[test]
     fn lines_height_matches_the_css_budget() {
-        assert!((lines_height(22, 6) - (22.0 * 1.35 * 6.0 + 16.0)).abs() < 1e-9);
+        assert!((lines_height(22, 6) - (22.0 * 1.35 * 6.0 + 16.0 + 40.0)).abs() < 1e-9);
         assert!(lines_height(48, 20) > lines_height(22, 6));
     }
 }

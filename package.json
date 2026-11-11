@@ -1,10 +1,10 @@
 {
-  "name": "audioscript",
+  "name": "lingwindow",
   "private": true,
-  "version": "0.6.2",
+  "version": "0.7.0",
   "type": "module",
   "packageManager": "pnpm@10.29.2",
-  "description": "AudioScript 声稿 — 离线优先语音转写，带悬浮流式字幕窗",
+  "description": "聆窗 LingWindow — 基于 AudioScript 的离线字幕与本地翻译",
   "license": "MIT",
   "scripts": {
     "gen:types": "typeshare src-tauri --lang=typescript --output-file=src/shared/types.ts",

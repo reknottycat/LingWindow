@@ -373,6 +373,10 @@ export function overlayToggle(): Promise<boolean> {
   return call<boolean>('overlay_toggle')
 }
 
+export function mainWindowShow(): Promise<void> {
+  return call<void>('main_window_show')
+}
+
 export function overlayHide(): Promise<void> {
   return call<void>('overlay_hide')
 }

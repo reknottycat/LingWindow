@@ -91,3 +91,17 @@ test('中文控件走本地化且没有硬编码快捷键', () => {
 test('渲染组件没有导入音频、ASR或翻译服务', () => {
   assert.equal(loads.some((p) => /session|audio|asr/i.test(path.relative(root, p))), false)
 })
+
+
+test('double click restores the main window without treating a click as a drag', () => {
+  const overlay = fs.readFileSync(path.join(root, 'src/overlay/main.tsx'), 'utf8')
+  const toolbar = fs.readFileSync(path.join(root, 'src/overlay/OverlayToolbar.tsx'), 'utf8')
+  const commands = fs.readFileSync(path.join(root, 'src-tauri/src/commands/mod.rs'), 'utf8')
+  const lifecycle = fs.readFileSync(path.join(root, 'src-tauri/src/lifecycle/mod.rs'), 'utf8')
+  assert.match(overlay, /onDoubleClick/)
+  assert.match(overlay, /config.mode === OverlayMode.Edit/)
+  assert.match(toolbar, /onDoubleClick=\{onShowMain\}/)
+  assert.match(toolbar, /Math.hypot[\s\S]*?< 4/)
+  assert.match(commands, /"main_window_show"[\s\S]*?lifecycle::show_main/)
+  assert.match(lifecycle, /unminimize\(\)/)
+})

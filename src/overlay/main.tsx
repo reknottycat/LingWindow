@@ -7,6 +7,7 @@ import {
   EVENT,
   formatCmdError,
   type HotkeyInfo,
+  mainWindowShow,
   overlayConfigGet,
   overlayConfigPatch,
   overlayHide,
@@ -109,6 +110,7 @@ function OverlayApp() {
         config={config}
         shortcuts={shortcuts}
         busy={busy}
+        onShowMain={() => void perform(mainWindowShow)}
         onHide={() => void perform(overlayHide)}
         onLock={() => void perform(() => overlaySetMode(OverlayMode.Locked))}
         onDisplayMode={(displayMode) => void perform(() => overlayConfigPatch({ displayMode }))}
@@ -119,7 +121,12 @@ function OverlayApp() {
           {error}
         </div>
       )}
-      <div className="min-h-0 flex-1">
+      <div
+        className="min-h-0 flex-1"
+        onDoubleClick={() => {
+          if (config.mode === OverlayMode.Edit) void perform(mainWindowShow)
+        }}
+      >
         <StreamView
           segments={segments}
           displayMode={config.displayMode}

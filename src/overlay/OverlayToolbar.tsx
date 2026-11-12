@@ -1,5 +1,5 @@
 import { getCurrentWindow } from '@tauri-apps/api/window'
-import type { MouseEvent } from 'react'
+import { type MouseEvent, useRef } from 'react'
 import { useI18n } from '@/shared/i18n'
 import { formatCmdError, type HotkeyInfo } from '@/shared/ipc'
 import { OVERLAY_TOOLBAR_HEIGHT, type OverlayConfig, OverlayDisplayMode, OverlayMode } from '@/shared/types'
@@ -9,6 +9,7 @@ interface Props {
   config: OverlayConfig
   shortcuts: HotkeyInfo[]
   busy: boolean
+  onShowMain?: () => void
   onHide: () => void
   onLock: () => void
   onDisplayMode: (mode: OverlayDisplayMode) => void
@@ -18,7 +19,7 @@ interface Props {
 const BUTTON =
   'flex h-7 shrink-0 items-center justify-center rounded px-1.5 text-[11px] font-medium text-white hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-white disabled:opacity-40'
 
-export function OverlayToolbar({ config, shortcuts, busy, onHide, onLock, onDisplayMode, onError }: Props) {
+export function OverlayToolbar({ config, shortcuts, busy, onShowMain, onHide, onLock, onDisplayMode, onError }: Props) {
   const { t } = useI18n()
   const unlockKey = shortcuts.find((key) => key.id === 'overlay.toggleMode' && key.registered)
   const showKey = shortcuts.find((key) => key.id === 'overlay.toggleVisible' && key.registered)
@@ -32,8 +33,12 @@ export function OverlayToolbar({ config, shortcuts, busy, onHide, onLock, onDisp
     ? t('overlayWindow.lock', { shortcut: unlockKey.acceleratorPretty })
     : t('overlayWindow.lockUnavailable')
 
+  const dragOrigin = useRef<{ x: number; y: number } | null>(null)
   const drag = (event: MouseEvent) => {
-    if (event.button !== 0) return
+    const origin = dragOrigin.current
+    if (!(event.buttons & 1) || !origin) return
+    if (Math.hypot(event.clientX - origin.x, event.clientY - origin.y) < 4) return
+    dragOrigin.current = null
     event.preventDefault()
     void getCurrentWindow()
       .startDragging()
@@ -62,7 +67,14 @@ export function OverlayToolbar({ config, shortcuts, busy, onHide, onLock, onDisp
         type="button"
         title={t('overlayWindow.move')}
         aria-label={t('overlayWindow.move')}
-        onMouseDown={drag}
+        onMouseDown={(event) => {
+          if (event.button === 0) dragOrigin.current = { x: event.clientX, y: event.clientY }
+        }}
+        onMouseMove={drag}
+        onMouseUp={() => {
+          dragOrigin.current = null
+        }}
+        onDoubleClick={onShowMain}
         className={`${BUTTON} min-w-8 flex-1 cursor-grab gap-1 active:cursor-grabbing`}
       >
         <span aria-hidden="true" className="text-base leading-none text-white/65">

@@ -199,6 +199,10 @@ pub fn route(app: &AppHandle, name: &str, args: &Value) -> Result<Value, CmdErro
         "overlay_toggle" => overlay::toggle(app)
             .map(|v| json!(v))
             .map_err(CmdError::Failed),
+        "main_window_show" => {
+            crate::lifecycle::show_main(app);
+            Ok(Value::Null)
+        }
         "overlay_hide" => overlay::hide(app)
             .map(|()| json!(null))
             .map_err(CmdError::Failed),

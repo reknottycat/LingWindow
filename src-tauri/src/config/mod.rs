@@ -666,11 +666,7 @@ impl Default for Preferences {
             shortcuts: std::collections::HashMap::new(),
             overlay_geometry: None,
             onboarding_done: false,
-            asr_model_tier: if cfg!(windows) {
-                AsrModelTier::Nemotron
-            } else {
-                AsrModelTier::default()
-            },
+            asr_model_tier: AsrModelTier::Nemotron,
             mt_model_tier: MtModelTier::default(),
             models_dir: None,
             analytics_enabled: false,
@@ -1055,6 +1051,7 @@ mod tests {
     #[test]
     fn default_preferences_are_valid_and_stable() {
         let p = Preferences::default();
+        assert_eq!(p.asr_model_tier, AsrModelTier::Nemotron);
         assert!(!p.analytics_enabled, "默认应关闭统计");
         assert_eq!(p.clone().sanitized(), p, "默认偏好必须已满足模型约束");
         if cfg!(windows) {

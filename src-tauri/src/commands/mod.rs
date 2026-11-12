@@ -141,6 +141,7 @@ pub async fn route_async(app: &AppHandle, name: &str, args: &Value) -> Result<Va
     }
 
     let plan = match name {
+        "session_set_direction" => Some((Lane::Session, std::time::Duration::from_secs(180))),
         "session_start" => Some((Lane::Session, std::time::Duration::from_secs(120))),
         "session_preview_text" => Some((Lane::Session, std::time::Duration::from_secs(180))),
         "monitor_start" => Some((Lane::Session, std::time::Duration::from_secs(90))),
@@ -223,6 +224,12 @@ pub fn route(app: &AppHandle, name: &str, args: &Value) -> Result<Value, CmdErro
 
         "overlay_debug" => overlay::debug_state(app).map_err(CmdError::Failed),
 
+        "session_set_direction" => {
+            let source: String = json_arg(args, "sourceLang")?;
+            let target: String = json_arg(args, "targetLang")?;
+            let script: crate::config::ZhScript = json_arg(args, "zhScript")?;
+            session::set_direction(app, source, target, script).map(|p| json!(p))
+        }
         "prefs_get" => Ok(json!(prefs::load(app))),
 
         "prefs_set" => {

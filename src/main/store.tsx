@@ -40,6 +40,7 @@ import {
   type SystemSettingsPane,
   sessionClear,
   sessionStart,
+  sessionSetDirection,
   sessionStatus,
   sessionStop,
   settingsOf,
@@ -140,7 +141,7 @@ interface Store {
   setTranslateEngine: (v: TranslateEngine) => void
   setAsrEngine: (v: EngineType) => void
   setEngineAndDirection: (engine: TranslateEngine, source: string, target: string, script: ZhScript) => void
-  setDirection: (source: string, target: string, script: ZhScript) => void
+  setDirection: (source: string, target: string, script: ZhScript) => Promise<void>
   changeTheme: (v: Theme) => Promise<void>
   changeLanguage: (v: Language) => Promise<void>
   setEndpoint: (v: EndpointConfig) => Promise<void>
@@ -676,15 +677,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [patchPrefs],
   )
 
+  useEffect(() => {
+    const unlisten = on<Preferences>(EVENT.direction, (p) => {
+      setSourceLang(p.sourceLang)
+      setTargetLang(p.targetLang)
+      setZhScript(p.zhScript)
+    })
+    return () => { void unlisten.then((fn) => fn()) }
+  }, [])
+
   const changeDirection = useCallback(
-    (source: string, target: string, script: ZhScript) => {
-      setSourceLang(source)
-      setTargetLang(target)
-      setZhScript(script)
-      void patchPrefs({ sourceLang: source, targetLang: target, zhScript: script })
-      track('setting_changed', { key: 'translate_direction', value: `${source}:${target}:${script}` })
+    async (source: string, target: string, script: ZhScript) => {
+      try {
+        const p = await sessionSetDirection(source, target, script)
+        setSourceLang(p.sourceLang)
+        setTargetLang(p.targetLang)
+        setZhScript(p.zhScript)
+        track('setting_changed', { key: 'translate_direction', value: `${source}:${target}:${script}` })
+      } catch (e) { setError(formatCmdError(e)); throw e }
     },
-    [patchPrefs],
+    [setError],
   )
 
   const changeEndpoint = useCallback(

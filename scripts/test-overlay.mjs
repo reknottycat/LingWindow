@@ -105,3 +105,17 @@ test('double click restores the main window without treating a click as a drag',
   assert.match(commands, /"main_window_show"[\s\S]*?lifecycle::show_main/)
   assert.match(lifecycle, /unminimize\(\)/)
 })
+
+
+test('overlay exposes compact direction controls and safe runtime IPC', () => {
+  const overlay = fs.readFileSync(path.join(root, 'src/overlay/main.tsx'), 'utf8')
+  const control = fs.readFileSync(path.join(root, 'src/overlay/DirectionControls.tsx'), 'utf8')
+  const toolbarSource = fs.readFileSync(path.join(root, 'src/overlay/OverlayToolbar.tsx'), 'utf8')
+  assert.match(overlay, /directionControls={<DirectionControls/)
+  assert.match(control, /sessionSetDirection/)
+  assert.match(control, /sourceLanguage/)
+  assert.match(control, /targetLanguage/)
+  assert.match(control, /swapDirection/)
+  assert.match(toolbarSource, /w-7 cursor-grab/)
+  assert.doesNotMatch(control, /prefsSet|sessionStart|sessionStop/)
+})

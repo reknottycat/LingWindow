@@ -69,6 +69,7 @@ export async function call<T = unknown>(name: string, args: Record<string, unkno
 }
 
 export const EVENT = {
+  direction: 'session://direction',
   segments: 'transcript://segments',
   taskState: 'transcript://state',
   overlayState: 'overlay://state',
@@ -218,6 +219,10 @@ export function monitorStart(targets: MonitorTarget[]): Promise<null> {
 
 export function monitorStop(): Promise<null> {
   return call<null>('monitor_stop')
+}
+
+export function sessionSetDirection(sourceLang: string, targetLang: string, zhScript: ZhScript): Promise<Preferences> {
+  return call<Preferences>('session_set_direction', { sourceLang, targetLang, zhScript })
 }
 
 export function prefsGet(): Promise<Preferences> {

@@ -22,6 +22,7 @@ import { useBroadcastSnapshot } from '@/shared/useBroadcastSnapshot'
 import { useTranscriptStream } from '@/shared/useTranscriptStream'
 import { OverlayToolbar, ResizeHandle } from './OverlayToolbar'
 import { StreamView } from './StreamView'
+import { DirectionControls } from './DirectionControls'
 
 const DEFAULT_CONFIG: OverlayConfig = {
   enable: true,
@@ -107,6 +108,7 @@ function OverlayApp() {
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden rounded-[var(--radius-panel)]">
       <OverlayToolbar
+        directionControls={<DirectionControls onError={setError} />}
         config={config}
         shortcuts={shortcuts}
         busy={busy}

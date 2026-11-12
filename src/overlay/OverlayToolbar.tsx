@@ -1,11 +1,12 @@
 import { getCurrentWindow } from '@tauri-apps/api/window'
-import { type MouseEvent, useRef } from 'react'
+import { type MouseEvent, type ReactNode, useRef } from 'react'
 import { useI18n } from '@/shared/i18n'
 import { formatCmdError, type HotkeyInfo } from '@/shared/ipc'
 import { OVERLAY_TOOLBAR_HEIGHT, type OverlayConfig, OverlayDisplayMode, OverlayMode } from '@/shared/types'
 import { Icon } from '@/ui/Icon'
 
 interface Props {
+  directionControls?: ReactNode
   config: OverlayConfig
   shortcuts: HotkeyInfo[]
   busy: boolean
@@ -19,7 +20,7 @@ interface Props {
 const BUTTON =
   'flex h-7 shrink-0 items-center justify-center rounded px-1.5 text-[11px] font-medium text-white hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-white disabled:opacity-40'
 
-export function OverlayToolbar({ config, shortcuts, busy, onShowMain, onHide, onLock, onDisplayMode, onError }: Props) {
+export function OverlayToolbar({ directionControls, config, shortcuts, busy, onShowMain, onHide, onLock, onDisplayMode, onError }: Props) {
   const { t } = useI18n()
   const unlockKey = shortcuts.find((key) => key.id === 'overlay.toggleMode' && key.registered)
   const showKey = shortcuts.find((key) => key.id === 'overlay.toggleVisible' && key.registered)
@@ -75,13 +76,15 @@ export function OverlayToolbar({ config, shortcuts, busy, onShowMain, onHide, on
           dragOrigin.current = null
         }}
         onDoubleClick={onShowMain}
-        className={`${BUTTON} min-w-8 flex-1 cursor-grab gap-1 active:cursor-grabbing`}
+        className={`${BUTTON} w-7 cursor-grab gap-1 active:cursor-grabbing`}
       >
         <span aria-hidden="true" className="text-base leading-none text-white/65">
           ⠿
         </span>
-        <span className="truncate">{t('overlayWindow.drag')}</span>
+        <span className="sr-only">{t('overlayWindow.drag')}</span>
+
       </button>
+      {directionControls}
       <fieldset
         aria-label={t('overlay.displayMode')}
         disabled={busy}

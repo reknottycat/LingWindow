@@ -309,6 +309,8 @@ pub enum TaskStatus {
 }
 
 struct RunningSession {
+    config: SessionConfig,
+    devices: audio::DeviceSelection,
     capture: CaptureHandle,
     engine: Arc<Mutex<Box<dyn AsrEngine>>>,
     device: String,
@@ -446,6 +448,7 @@ struct PreviewContext {
 }
 
 enum TranslateCommand {
+    Barrier(Sender<()>),
     Start {
         queue: Arc<JobQueue>,
         translator: Arc<Mutex<Box<dyn Translator>>>,
@@ -462,14 +465,20 @@ pub fn init_translate_worker() -> Result<(), String> {
     std::thread::Builder::new()
         .name("translate-worker".into())
         .spawn(move || {
-            while let Ok(TranslateCommand::Start {
-                queue,
-                translator,
-                store,
-                events,
-                mut preview,
-            }) = rx.recv()
-            {
+            while let Ok(command) = rx.recv() {
+                let TranslateCommand::Start {
+                    queue,
+                    translator,
+                    store,
+                    events,
+                    mut preview,
+                } = command
+                else {
+                    if let TranslateCommand::Barrier(done) = command {
+                        let _ = done.send(());
+                    }
+                    continue;
+                };
                 while let Some(job) = queue.pop_blocking() {
                     let result = translator
                         .lock()
@@ -1050,6 +1059,8 @@ pub fn start(
         .running
         .lock()
         .expect("session running mutex poisoned") = Some(RunningSession {
+        config: cfg.clone(),
+        devices: devices.clone(),
         capture,
         engine,
         device: device_name,
@@ -1088,6 +1099,84 @@ pub fn start(
 
 pub fn stop(app: &AppHandle) -> Result<(), String> {
     stop_with_reason(app, "user")
+}
+
+/// Serialized on the session lane. Old translation work finishes before reconfiguration.
+pub fn set_direction(
+    app: &AppHandle,
+    source: String,
+    target: String,
+    script: crate::config::ZhScript,
+) -> Result<crate::config::Preferences, CmdError> {
+    let old = crate::prefs::load(app);
+    if !crate::config::source_lang_allowed(
+        old.translate_engine,
+        old.asr_engine,
+        old.asr_model_tier,
+        old.mt_model_tier,
+        &source,
+    ) || crate::config::effective_target_lang(
+        old.translate_engine,
+        old.mt_model_tier,
+        &source,
+        &target,
+    ) != target
+    {
+        return Err(CmdError::BadArgs(
+            "Unsupported direction; select an explicit supported source language".into(),
+        ));
+    }
+    let state = app.state::<SessionState>();
+    let resume = state
+        .running
+        .lock()
+        .expect("session running mutex poisoned")
+        .as_ref()
+        .map(|r| (r.config.clone(), r.source, r.devices.clone()));
+    if resume.is_some() {
+        stop_with_reason(app, "direction_change").map_err(CmdError::Failed)?;
+        if !state.wait_until_idle(Duration::from_secs(20)) {
+            return Err(CmdError::Failed(
+                "Capture stopped; teardown timed out; original settings retained".into(),
+            ));
+        }
+    }
+    let (tx, rx) = std::sync::mpsc::channel();
+    TRANSLATE_TX
+        .get()
+        .ok_or_else(|| CmdError::Failed("Translation worker unavailable".into()))?
+        .send(TranslateCommand::Barrier(tx))
+        .map_err(|_| CmdError::Failed("Translation worker closed".into()))?;
+    rx.recv_timeout(Duration::from_secs(30)).map_err(|_| {
+        CmdError::Failed(
+            "Capture stopped; old translation still finishing; original settings retained".into(),
+        )
+    })?;
+    let updated = crate::prefs::update(app, |p| {
+        p.source_lang = source.clone();
+        p.target_lang = target.clone();
+        p.zh_script = script;
+    })
+    .map_err(CmdError::Failed)?;
+    if let Some((mut cfg, source_kind, devices)) = resume {
+        cfg.asr.source_lang = source.clone();
+        cfg.translate.source_lang = source;
+        cfg.translate.target_lang = target;
+        cfg.translate.zh_script = script;
+        if let Err(error) = start(app, cfg, source_kind, devices) {
+            let _ = crate::prefs::update(app, |p| {
+                p.source_lang = old.source_lang.clone();
+                p.target_lang = old.target_lang.clone();
+                p.zh_script = old.zh_script;
+            });
+            return Err(CmdError::Failed(format!(
+                "Capture stopped; restart failed, original direction restored: {error}"
+            )));
+        }
+    }
+    use tauri::Emitter;
+    let _ = app.emit("session://direction", &updated);
+    Ok(updated)
 }
 
 pub fn stop_with_reason(app: &AppHandle, reason: &'static str) -> Result<(), String> {
@@ -1601,5 +1690,27 @@ mod tests {
         ] {
             assert!(validate_preview_state(false, false, engine).is_err());
         }
+    }
+}
+
+#[cfg(test)]
+mod direction_barrier_tests {
+    use super::*;
+    #[test]
+    fn barrier_is_acknowledged_in_fifo_order() {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let (done, ack) = std::sync::mpsc::channel();
+        tx.send(TranslateCommand::Barrier(done)).unwrap();
+        assert!(ack.try_recv().is_err());
+        match rx.recv().unwrap() {
+            TranslateCommand::Barrier(done) => done.send(()).unwrap(),
+            _ => panic!("expected barrier"),
+        }
+        assert!(ack.recv_timeout(Duration::from_millis(50)).is_ok());
+    }
+    #[test]
+    fn existing_explicit_asr_preference_is_not_replaced() {
+        let p = crate::prefs::parse(r#"{"asrModelTier":"builtin"}"#).unwrap();
+        assert_eq!(p.asr_model_tier, AsrModelTier::Builtin);
     }
 }

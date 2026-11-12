@@ -252,6 +252,7 @@ export const en: Messages = {
     'Timed out waiting for the system prompt. The prompt may still be on screen; confirm it and probe again.',
 
   'translate.title': 'Translation',
+  'translate.directionRuntimeNotice': 'Source language is manual for this ASR integration; automatic detection is not available. Direction changes safely restart capture, so there may be a brief gap.',
   'translate.capturingHint': 'Models and segmentation settings cannot be changed while transcribing.',
   'translate.engineGroup': 'Machine translation',
   'translate.engine': 'Translation engine',

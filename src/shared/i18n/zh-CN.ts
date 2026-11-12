@@ -238,6 +238,7 @@ export const zhCN = {
   'permissions.micTimeout': '等待系统弹窗超时。弹窗可能仍停留在屏幕上，确认后请重新检测。',
 
   'translate.title': '翻译',
+  'translate.directionRuntimeNotice': '当前识别接入需手动选择源语言，尚不支持自动检测。运行中切换方向会安全重启采集，可能有短暂间隔。',
   'translate.capturingHint': '转写进行中，模型与断句参数暂不可修改。',
   'translate.engineGroup': '机器翻译',
   'translate.engine': '翻译引擎',

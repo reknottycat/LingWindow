@@ -226,7 +226,8 @@ export function TranslatePage() {
     disabled: !isSupportedPair(sourceChoice, language, translateEngine, multilingualMt),
   }))
 
-  const directionDisabled = capturing || translateEngine === TranslateEngine.Off
+  const [directionBusy, setDirectionBusy] = useState(false)
+  const directionDisabled = directionBusy || translateEngine === TranslateEngine.Off
   const reverseSource = sourceCatalog.find((language) => language.id === targetChoice.id)
   const reverseTarget = targetCatalog.find((language) => language.id === sourceChoice.id)
   const canSwap =
@@ -254,7 +255,7 @@ export function TranslatePage() {
     }
     const fallback =
       preferredSource(targetChoice, zhScript, translateEngine, sourceCatalog, multilingualMt) ?? sourceCatalog[0]
-    setDirection(fallback.backend, targetChoice.backend, scriptForPair(fallback, targetChoice, zhScript))
+    if (!capturing) void setDirection(fallback.backend, targetChoice.backend, scriptForPair(fallback, targetChoice, zhScript)).catch(() => {})
   }, [
     models,
     sourceLang,
@@ -296,7 +297,10 @@ export function TranslatePage() {
   }
 
   function applyPair(source: LanguageChoice, target: LanguageChoice) {
-    setDirection(source.backend, target.backend, scriptForPair(source, target, zhScript))
+    if (directionBusy) return
+    setDirectionBusy(true)
+    void setDirection(source.backend, target.backend, scriptForPair(source, target, zhScript))
+      .catch(() => {}).finally(() => setDirectionBusy(false))
   }
 
   function changeSource(id: string) {
@@ -391,7 +395,7 @@ export function TranslatePage() {
         <SettingsRow
           icon="translate"
           title={t('translate.direction')}
-          description={directionSubtitle}
+          description={`${directionSubtitle} ${t('translate.directionRuntimeNotice')}`}
           control={
             <div className="flex items-center gap-1.5">
               <Select

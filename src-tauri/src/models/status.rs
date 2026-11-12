@@ -174,7 +174,11 @@ fn base_status(entry: &CatalogEntry, selected: bool) -> ModelStatus {
         streaming: entry.streaming().unwrap_or(false),
         path: None,
         via: None,
-        installed_bytes: entry.sizes.installed_bytes.min(u32::MAX as u64) as u32,
+        installed_bytes: if cfg!(target_os = "windows") && entry.id == "mt-hymt2" {
+            4_086_795_481 // Official BF16 model files; Python/CUDA runtime is additional.
+        } else {
+            entry.sizes.installed_bytes.min(u32::MAX as u64) as u32
+        },
         download_bytes: entry
             .archive
             .as_ref()

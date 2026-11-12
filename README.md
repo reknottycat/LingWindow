@@ -2,7 +2,7 @@
 
 [简体中文](README.zh-CN.md) · [Privacy](docs/PRIVACY.md) · [Third-party notices](src-tauri/resources/third-party/THIRD_PARTY_NOTICES.md)
 
-Local speech transcription, translation and floating captions for macOS and Windows, with a focus on Russian and English to Chinese.
+Local speech transcription, multilingual translation and floating captions for macOS and Windows. Available speech translation directions depend on both the selected recognition model and translation model.
 
 LingWindow is an independent derivative of [AudioScript](https://github.com/niyongsheng/AudioScript) **v0.7.0**. Thank you to **Nico (niyongsheng)** and all upstream contributors for sharing their work. The original copyright and MIT license are retained. This is not an official AudioScript release and does not imply upstream endorsement.
 
@@ -12,7 +12,7 @@ Upstream baseline: [`c38becd4556e07791b600bff0d73b32c2c4ae06c`](https://github.c
 
 - System audio, microphone, mixed audio and selected-application capture, subject to platform support and permissions. Level preview requires an explicit click; opening settings does not start capture.
 - AudioScript's existing recognition pipeline, including optional Nemotron 3.5 and Qwen3-ASR models. Russian requires a Russian-capable model; the bundled Chinese/English Zipformer does not support Russian.
-- Local HY-MT2 translation: MLX 4-bit on Apple Silicon; a separate Python / Transformers runtime with optional NVIDIA CUDA on Windows. The current adapter supports Russian or English to Chinese.
+- Local HY-MT2 translation: MLX 4-bit on Apple Silicon; a separate Python / Transformers runtime with optional NVIDIA CUDA on Windows. The current source supports translation between distinct languages in the HY-MT2 catalog (37 base language codes). Speech input languages are restricted to the intersection with the selected ASR model; target languages follow the translation model. Chinese script conversion remains available. Available directions are not a claim that every language pair has been tested.
 - Existing LMT, OPUS-MT and other translation choices remain available. Their capabilities and licenses differ.
 - Original, bilingual and translation-only caption modes, a visible toolbar, hide control, drag region and saved display preferences.
 - A silent text test uses the actual translation queue and overlay without playback, capture or ASR. It checks translation setup, not speech end-to-end performance.
@@ -53,6 +53,8 @@ pnpm tauri build
 See the [HY-MT2 document](docs/HYMT2-LOCAL.md) for Apple Silicon toolchain and runtime details. Follow the Windows-specific instructions for MSVC, static CRT, Python and CUDA requirements.
 
 ## Validation limits
+
+Windows BF16/CUDA text-only checks covered Russian→Chinese, English→Chinese, Chinese→English, Japanese→English and Russian→English; English→Chinese was also shown in the real bilingual overlay. These checks do not establish speech end-to-end quality, all-pair quality or updated Mac-package validation. The expanded Mac language handling is present in source but has not been covered by these Windows checks.
 
 - Compilation, unit tests, protocol tests, actual model inference, desktop interaction and speech end-to-end tests are separate stages. Consult the evidence attached to the particular release.
 - Text-to-caption timing excludes speech duration, segmentation and ASR. It is not speech end-to-end latency.

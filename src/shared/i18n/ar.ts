@@ -2,7 +2,9 @@ import type { Messages } from './zh-CN'
 
 export const ar: Partial<Messages> = {
   'models.modelMtHymt2Title': 'HY-MT2 1.8B',
-  'models.hymt2Directions': 'من الإنجليزية / الروسية إلى الصينية',
+  'translate.swapDirection': "Swap source and target",
+  'translate.swapUnsupported': "Current ASR cannot recognize the reverse source. Choose a compatible speech model first.",
+  'models.hymt2Directions': "Multilingual translation (speech input depends on ASR)",
   'models.manualInstall': 'ثبّت النموذج وبيئة Python محليًا؛ لا يتوفر تنزيل من داخل التطبيق',
   'models.statusManual': 'يلزم إعداد محلي',
   'models.previewTitle': 'اختبار نصي دون صوت',
@@ -12,8 +14,7 @@ export const ar: Partial<Messages> = {
   'models.previewButton': 'اختبار الترجمة ونافذة النص',
   'models.previewWorking': 'جارٍ الترجمة…',
   'models.previewResult': 'أُرسل حدث الترجمة خلال {ms} مللي ثانية. تحقّق من نافذة النص بصريًا.',
-  'translate.directionSubtitleHymt2':
-    'نسخة HY-MT2 المحلية: من الإنجليزية أو الروسية إلى الصينية فقط. يتطلب الصوت الروسي نموذج تعرّف على الكلام يدعم الروسية.',
+  'translate.directionSubtitleHymt2': "HY-MT2 multilingual translation. Source languages follow ASR support; targets follow the translation model. New directions require testing; quality varies.",
   'overlay.displayMode': 'عرض النص',
   'overlay.displayModeDescription': 'يغيّر العرض فقط؛ يستمر التفريغ والترجمة.',
   'overlay.displaySource': 'الأصل',
@@ -406,7 +407,9 @@ export const ar: Partial<Messages> = {
   'models.languagesZhEn': 'ZH · EN',
   'models.streaming': 'بث',
   'models.nonStreaming': 'غير بث',
-  'models.installedSize': 'حوالي {size}',
+  'models.installedSize': 'Estimated disk space: {size}',
+  'models.refreshStatus': 'Refresh model status',
+  'models.previewNotReady': 'Install the selected translation model and runtime, then refresh. Text preview does not require an ASR model.',
   'models.licenseAttribution': ' (يلزم ذكر المصدر)',
   'models.incomplete': ' · الملفات غير مكتملة؛ أعد التنزيل',
   'models.bundledMissing': ' · ملفات مضمّنة مفقودة؛ أعد تثبيت التطبيق',

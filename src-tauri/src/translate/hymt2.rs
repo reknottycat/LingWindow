@@ -42,7 +42,10 @@ pub struct RuntimeConfig {
 }
 
 pub fn supported_pair(source: &str, target: &str) -> bool {
-    matches!(base_lang(source), "en" | "ru") && base_lang(target) == "zh"
+    let entry = crate::models::catalog::mt_entry(crate::config::MtModelTier::Hymt2);
+    base_lang(source) != base_lang(target)
+        && entry.supports_language(source)
+        && entry.supports_language(target)
 }
 
 pub fn validate_text(text: &str) -> Result<&str, String> {
@@ -162,6 +165,7 @@ pub fn validate_install(root: &Path) -> Result<(), String> {
 pub struct Hymt2Translator {
     root: PathBuf,
     source: String,
+    target: String,
     script: Option<ZhScript>,
     request_id: u64,
     #[cfg(any(windows, all(target_os = "macos", target_arch = "aarch64")))]
@@ -173,6 +177,7 @@ impl Hymt2Translator {
         Self {
             root,
             source: String::new(),
+            target: String::new(),
             script: None,
             request_id: 0,
             #[cfg(any(windows, all(target_os = "macos", target_arch = "aarch64")))]
@@ -192,7 +197,8 @@ impl Translator for Hymt2Translator {
         }
         validate_install(&self.root).map_err(TranslateError::ModelLoad)?;
         self.source = base_lang(&cfg.source_lang).into();
-        self.script = Some(cfg.zh_script);
+        self.target = base_lang(&cfg.target_lang).into();
+        self.script = (self.target == "zh").then_some(cfg.zh_script);
         #[cfg(any(windows, all(target_os = "macos", target_arch = "aarch64")))]
         {
             let runtime = runtime_config(&self.root).map_err(TranslateError::ModelLoad)?;
@@ -236,7 +242,7 @@ impl Translator for Hymt2Translator {
                     .process
                     .as_mut()
                     .ok_or_else(|| tr(Key::HymtWorkerRestart).to_string())?;
-                process.write_request(&serde_json::json!({"op": "translate", "id": id, "text": text, "source": self.source, "target": "zh"}))?;
+                process.write_request(&serde_json::json!({"op": "translate", "id": id, "text": text, "source": self.source, "target": self.target}))?;
                 let reply = process.read_response(std::time::Duration::from_secs(60))?;
                 if reply["id"].as_u64() != Some(id) || reply["type"] != "translation" {
                     return Err(response_error(&reply));
@@ -443,9 +449,12 @@ mod tests {
     fn restricts_to_implemented_directions() {
         assert!(supported_pair("ru-RU", "zh-Hant"));
         assert!(supported_pair("en", "zh"));
-        assert!(!supported_pair("zh", "en"));
-        assert!(!supported_pair("en", "ru"));
-        assert!(!supported_pair("fr", "zh"));
+        assert!(supported_pair("zh", "en"));
+        assert!(supported_pair("en", "ru"));
+        assert!(supported_pair("fr", "zh"));
+        assert!(!supported_pair("zh", "zh-Hant"));
+        assert!(!supported_pair("auto", "en"));
+        assert!(supported_pair("fil", "en"));
     }
     #[test]
     fn text_validation_counts_unicode_characters() {

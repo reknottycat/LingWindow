@@ -131,17 +131,13 @@ export function TranslatePage() {
   const multilingualAsr = selectedAsrModel?.multilingual === true
   const multilingualMt = selectedMtModel?.multilingual === true
   const hymt2 = translateEngine === TranslateEngine.LocalNmt && selectedMtModel?.id === 'mt-hymt2'
-  const targetCatalog = targetLanguagesFor(
-    translateEngine,
-    appleChoices,
-    multilingualMt ? multilingualCatalog : [],
-  ).filter((language) => !hymt2 || language.backend === 'zh')
+  const targetCatalog = targetLanguagesFor(translateEngine, appleChoices, multilingualMt ? multilingualCatalog : [])
   const sourceCatalog = sourceLanguagesFor(
     translateEngine,
     multilingualAsr || asrEngine === EngineType.MacNative,
     withinAsr(appleChoices),
     multilingualMt ? withinAsr(multilingualCatalog) : [],
-  ).filter((language) => !hymt2 || language.backend === 'en' || language.backend === 'ru')
+  )
 
   const localModelOptions = (list: ModelStatus[], subtitle: (model: ModelStatus) => string) =>
     list.map((model) => ({
@@ -231,6 +227,10 @@ export function TranslatePage() {
   }))
 
   const directionDisabled = capturing || translateEngine === TranslateEngine.Off
+  const reverseSource = sourceCatalog.find((language) => language.id === targetChoice.id)
+  const reverseTarget = targetCatalog.find((language) => language.id === sourceChoice.id)
+  const canSwap =
+    !!reverseSource && !!reverseTarget && isSupportedPair(reverseSource, reverseTarget, translateEngine, multilingualMt)
   const directionSubtitle = (() => {
     switch (translateEngine) {
       case TranslateEngine.Off:
@@ -250,7 +250,6 @@ export function TranslatePage() {
   useEffect(() => {
     if (!models) return
     if (languageById(languageIdFor(sourceLang, zhScript, sourceCatalog), sourceCatalog)) {
-      if (hymt2 && targetLang !== 'zh') setDirection(sourceLang, 'zh', zhScript)
       return
     }
     const fallback =
@@ -331,16 +330,13 @@ export function TranslatePage() {
 
     const pairs = engine === TranslateEngine.LocalNmt && nextModel?.multilingual === true
     const multilingual = pairs && nextModel ? multilingualChoices(nextModel.languages, displayName) : []
-    const nextHymt2 = engine === TranslateEngine.LocalNmt && nextModel?.id === 'mt-hymt2'
-    const nextTargets = targetLanguagesFor(engine, appleChoices, multilingual).filter(
-      (language) => !nextHymt2 || language.backend === 'zh',
-    )
+    const nextTargets = targetLanguagesFor(engine, appleChoices, multilingual)
     const nextSources = sourceLanguagesFor(
       engine,
       multilingualAsr || asrEngine === EngineType.MacNative,
       withinAsr(appleChoices),
       withinAsr(multilingual),
-    ).filter((language) => !nextHymt2 || language.backend === 'en' || language.backend === 'ru')
+    )
     const source =
       languageById(languageIdFor(sourceLang, zhScript, nextSources), nextSources) ??
       preferredSource(targetChoice, zhScript, engine, nextSources, pairs) ??
@@ -406,7 +402,16 @@ export function TranslatePage() {
                 onChange={changeSource}
                 disabled={directionDisabled}
               />
-              <Icon name="arrowRight" size={14} className="shrink-0 text-[var(--color-ink-2)] rtl:rotate-180" />
+              <button
+                type="button"
+                aria-label={t('translate.swapDirection')}
+                title={t(canSwap ? 'translate.swapDirection' : 'translate.swapUnsupported')}
+                disabled={directionDisabled || !canSwap}
+                onClick={() => reverseSource && reverseTarget && applyPair(reverseSource, reverseTarget)}
+                className="rounded-[var(--radius-ctl)] border border-[var(--color-border-subtle)] px-2 py-1 disabled:opacity-40"
+              >
+                ⇄
+              </button>
               <Select
                 variant="rich"
                 label={t('translate.targetLanguage')}

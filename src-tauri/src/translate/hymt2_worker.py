@@ -8,7 +8,15 @@ import sys
 
 PROTOCOL = sys.stdout
 MAX_CHARS = 2000
-PROMPT = "将以下文本翻译为中文，注意只需要输出翻译后的结果，不要额外解释：\n"
+LANGUAGES = dict(zip(
+    'zh en fr pt es ja tr ru ar ko th it de vi ms id tl hi zh-Hant pl cs nl km my fa gu ur te mr he bn ta uk bo kk mn ug yue'.split(),
+    ['Chinese', 'English', 'French', 'Portuguese', 'Spanish', 'Japanese', 'Turkish',
+     'Russian', 'Arabic', 'Korean', 'Thai', 'Italian', 'German', 'Vietnamese',
+     'Malay', 'Indonesian', 'Filipino', 'Hindi', 'Traditional Chinese', 'Polish',
+     'Czech', 'Dutch', 'Khmer', 'Burmese', 'Persian', 'Gujarati', 'Urdu', 'Telugu',
+     'Marathi', 'Hebrew', 'Bengali', 'Tamil', 'Ukrainian', 'Tibetan', 'Kazakh',
+     'Mongolian', 'Uyghur', 'Cantonese']))
+LANGUAGES['fil'] = LANGUAGES['tl']
 
 
 def reply(value):
@@ -27,8 +35,10 @@ def validate_request(request):
     request_id = request.get("id")
     if isinstance(request_id, bool) or not isinstance(request_id, int) or request_id < 1:
         raise ValueError("invalid request id")
-    if request.get("source") not in ("en", "ru") or request.get("target") != "zh":
-        raise ValueError("supported directions: en/ru → zh")
+    if request.get("source") not in LANGUAGES or request.get("target") not in LANGUAGES:
+        raise ValueError("unsupported language")
+    if request["source"] == request["target"]:
+        raise ValueError("source and target must differ")
     return text.strip()
 
 
@@ -48,10 +58,10 @@ def main():
         sampler = make_sampler(temp=0.7, top_p=0.6, top_k=20)
         processors = make_logits_processors(repetition_penalty=1.05, repetition_context_size=262144)
 
-        def translate(text, request_id, max_tokens=512):
+        def translate(text, request_id, max_tokens=512, target="zh"):
             mx.random.seed((42 + request_id) % (2 ** 32))
             prompt = tokenizer.apply_chat_template(
-                [{"role": "user", "content": PROMPT + text}],
+                [{"role": "user", "content": f"Translate the following text into {LANGUAGES[target]}. Only output the translated result without additional explanation:\n\n{text}"}],
                 tokenize=False, add_generation_prompt=True,
             )
             chunks = []
@@ -81,7 +91,7 @@ def main():
             request_id = request.get("id") if isinstance(request, dict) else None
             text = validate_request(request)
             with contextlib.redirect_stdout(sys.stderr):
-                result = translate(text, request_id)
+                result = translate(text, request_id, target=request["target"])
             reply({"type": "translation", "id": request_id, "text": result})
         except Exception as exc:
             reply({"type": "error", "id": request_id, "error": str(exc)[:2000]})

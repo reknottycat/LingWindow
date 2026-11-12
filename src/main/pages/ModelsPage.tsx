@@ -63,6 +63,7 @@ export function ModelsPage() {
   const [dismissedCapturing, setDismissedCapturing] = useState(false)
 
   const brokenSelected = list ? [...list.asr, ...list.mt].find((m) => m.selected && !m.complete) : undefined
+  const previewReady = list?.mt.some((m) => m.selected && m.complete) ?? false
   const brokenSelectedId = brokenSelected?.id
 
   useEffect(() => {
@@ -77,7 +78,7 @@ export function ModelsPage() {
   const [previewResult, setPreviewResult] = useState<{ translation: string; eventMs: number } | null>(null)
 
   async function preview() {
-    if (previewBusy || capturing) return
+    if (previewBusy || capturing || !previewReady) return
     setPreviewBusy(true)
     setPreviewResult(null)
     try {
@@ -193,6 +194,9 @@ export function ModelsPage() {
 
   return (
     <Page title={t('models.title')}>
+      <Button size="sm" onClick={retry}>
+        {t('models.refreshStatus')}
+      </Button>
       {loadError && (
         <Alert
           tone="error"
@@ -282,7 +286,10 @@ export function ModelsPage() {
         </SettingsGroup>
       ))}
 
-      <SettingsGroup title={t('models.previewTitle')} footer={t('models.previewBody')}>
+      <SettingsGroup
+        title={t('models.previewTitle')}
+        footer={t(previewReady ? 'models.previewBody' : 'models.previewNotReady')}
+      >
         <SettingsRow
           icon="translate"
           title={t('models.previewInput')}
@@ -298,7 +305,11 @@ export function ModelsPage() {
             />
           }
           control={
-            <Button size="sm" disabled={previewBusy || capturing || !previewText.trim()} onClick={() => void preview()}>
+            <Button
+              size="sm"
+              disabled={previewBusy || capturing || !previewReady || !previewText.trim()}
+              onClick={() => void preview()}
+            >
               {t(previewBusy ? 'models.previewWorking' : 'models.previewButton')}
             </Button>
           }
@@ -426,6 +437,7 @@ function ModelRow({
           {!model.bundled &&
             !model.downloadable &&
             t(model.id === 'mt-hymt2' ? 'models.manualInstall' : 'models.notPublished')}
+          {model.path && <span className="block break-all font-mono">{model.path}</span>}
           {!model.complete && model.missing.length > 0 && (
             <span className="block break-words">{model.missing.join('; ')}</span>
           )}

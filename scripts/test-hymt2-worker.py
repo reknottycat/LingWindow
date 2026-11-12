@@ -33,6 +33,8 @@ class InputTests(unittest.TestCase):
 
     def test_language_scope(self):
         for source, target in (("fr", "zh"), ("zh", "en"), ("ru", "en")):
+            self.assertEqual(worker.validate_request(request(source=source, target=target)), "Hello")
+        for source, target in (("auto", "zh"), ("zh", "zh"), ("en", "unknown")):
             with self.assertRaises(ValueError):
                 worker.validate_request(request(source=source, target=target))
 
@@ -78,7 +80,7 @@ def smoke(model):
             result = send(request(text, source, request_id=i))
             assert result.get("type") == "translation" and result.get("id") == i, result
             assert any("\u4e00" <= char <= "\u9fff" for char in result["text"]), result
-        invalid = send(request("Bonjour", "fr", request_id=4))
+        invalid = send(request("Bonjour", "unknown", request_id=4))
         assert invalid.get("type") == "error", invalid
         # A rejected request must not poison a later valid request.
         recovered = send(request("Thank you.", request_id=5))

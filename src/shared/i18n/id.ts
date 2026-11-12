@@ -2,7 +2,9 @@ import type { Messages } from './zh-CN'
 
 export const id: Partial<Messages> = {
   'models.modelMtHymt2Title': 'HY-MT2 1.8B',
-  'models.hymt2Directions': 'Inggris / Rusia → Mandarin',
+  'translate.swapDirection': "Swap source and target",
+  'translate.swapUnsupported': "Current ASR cannot recognize the reverse source. Choose a compatible speech model first.",
+  'models.hymt2Directions': "Multilingual translation (speech input depends on ASR)",
   'models.manualInstall': 'Instal model dan lingkungan Python secara lokal; tidak ada unduhan dalam aplikasi',
   'models.statusManual': 'Perlu penyiapan lokal',
   'models.previewTitle': 'Uji teks tanpa suara',
@@ -12,8 +14,7 @@ export const id: Partial<Messages> = {
   'models.previewButton': 'Uji terjemahan dan takarir',
   'models.previewWorking': 'Menerjemahkan…',
   'models.previewResult': 'Peristiwa terjemahan dikirim dalam {ms} ms. Periksa takarir secara visual.',
-  'translate.directionSubtitleHymt2':
-    'Versi lokal HY-MT2: hanya Inggris atau Rusia ke Mandarin. Audio Rusia memerlukan model pengenalan suara yang mendukung bahasa Rusia.',
+  'translate.directionSubtitleHymt2': "HY-MT2 multilingual translation. Source languages follow ASR support; targets follow the translation model. New directions require testing; quality varies.",
   'overlay.displayMode': 'Tampilan takarir',
   'overlay.displayModeDescription': 'Hanya mengubah tampilan; transkripsi dan terjemahan tetap berjalan.',
   'overlay.displaySource': 'Asli',
@@ -422,7 +423,9 @@ export const id: Partial<Messages> = {
   'models.languagesZhEn': 'ZH · EN',
   'models.streaming': 'Streaming',
   'models.nonStreaming': 'Non-streaming',
-  'models.installedSize': 'Sekitar {size}',
+  'models.installedSize': 'Estimated disk space: {size}',
+  'models.refreshStatus': 'Refresh model status',
+  'models.previewNotReady': 'Install the selected translation model and runtime, then refresh. Text preview does not require an ASR model.',
   'models.licenseAttribution': ' (perlu atribusi)',
   'models.incomplete': ' · File tidak lengkap; unduh ulang',
   'models.bundledMissing': ' · File bawaan tidak ada; pasang ulang aplikasi',

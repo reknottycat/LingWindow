@@ -2,7 +2,9 @@ import type { Messages } from './zh-CN'
 
 export const ko: Partial<Messages> = {
   'models.modelMtHymt2Title': 'HY-MT2 1.8B',
-  'models.hymt2Directions': '영어 / 러시아어 → 중국어',
+  'translate.swapDirection': "Swap source and target",
+  'translate.swapUnsupported': "Current ASR cannot recognize the reverse source. Choose a compatible speech model first.",
+  'models.hymt2Directions': "Multilingual translation (speech input depends on ASR)",
   'models.manualInstall': '모델과 Python 실행 환경을 로컬에 설치하세요. 앱 내 다운로드는 제공되지 않습니다',
   'models.statusManual': '로컬 설정 필요',
   'models.previewTitle': '음성 없는 텍스트 테스트',
@@ -12,8 +14,7 @@ export const ko: Partial<Messages> = {
   'models.previewButton': '번역 및 자막 창 테스트',
   'models.previewWorking': '번역 중…',
   'models.previewResult': '{ms}ms 만에 번역 이벤트를 보냈습니다. 자막 창을 직접 확인하세요.',
-  'translate.directionSubtitleHymt2':
-    'HY-MT2 로컬 버전: 영어 또는 러시아어에서 중국어로만 번역합니다. 러시아어 오디오는 러시아어를 지원하는 음성 인식 모델이 필요합니다.',
+  'translate.directionSubtitleHymt2': "HY-MT2 multilingual translation. Source languages follow ASR support; targets follow the translation model. New directions require testing; quality varies.",
   'overlay.displayMode': '자막 표시',
   'overlay.displayModeDescription': '표시 내용만 변경합니다. 전사와 번역은 계속됩니다.',
   'overlay.displaySource': '원문',
@@ -414,7 +415,9 @@ export const ko: Partial<Messages> = {
   'models.languagesZhEn': '중영',
   'models.streaming': '스트리밍',
   'models.nonStreaming': '비스트리밍',
-  'models.installedSize': '약 {size}',
+  'models.installedSize': 'Estimated disk space: {size}',
+  'models.refreshStatus': 'Refresh model status',
+  'models.previewNotReady': 'Install the selected translation model and runtime, then refresh. Text preview does not require an ASR model.',
   'models.licenseAttribution': ' (저작자 표시 필요)',
   'models.incomplete': ' · 파일이 불완전합니다. 다시 다운로드하세요',
   'models.bundledMissing': ' · 내장 파일이 누락되었습니다. 앱을 다시 설치하세요',

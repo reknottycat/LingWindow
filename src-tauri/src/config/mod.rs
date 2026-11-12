@@ -920,9 +920,6 @@ pub fn source_lang_allowed(
     }
     match engine {
         TranslateEngine::MacTranslation => is_language_tag(lang),
-        TranslateEngine::LocalNmt if mt_tier == MtModelTier::Hymt2 => {
-            matches!(base_lang(lang), "en" | "ru")
-        }
         TranslateEngine::LocalNmt => catalog::mt_entry(mt_tier).supports_language(lang),
         _ => is_supported_source_lang(lang),
     }
@@ -949,13 +946,6 @@ pub fn effective_target_lang<'a>(
     source_lang: &str,
     target_lang: &'a str,
 ) -> &'a str {
-    if engine == TranslateEngine::LocalNmt && mt_tier == MtModelTier::Hymt2 {
-        return if base_lang(target_lang) == "zh" {
-            target_lang
-        } else {
-            "zh"
-        };
-    }
     let supported = base_lang(target_lang) != base_lang(source_lang)
         && match engine {
             TranslateEngine::MacTranslation => is_language_tag(target_lang),
@@ -2175,7 +2165,7 @@ mod tests {
             MtModelTier::Hymt2,
             "ru"
         ));
-        assert!(!source_lang_allowed(
+        assert!(source_lang_allowed(
             TranslateEngine::LocalNmt,
             EngineType::LocalStreaming,
             AsrModelTier::Qwen3,
@@ -2184,7 +2174,7 @@ mod tests {
         ));
         assert_eq!(
             effective_target_lang(TranslateEngine::LocalNmt, MtModelTier::Hymt2, "ru", "en"),
-            "zh"
+            "en"
         );
         let saved: Preferences = serde_json::from_str(r#"{"mtModelTier":"lmt-fast"}"#).unwrap();
         assert_eq!(

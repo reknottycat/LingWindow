@@ -181,7 +181,11 @@ fn base_status(entry: &CatalogEntry, selected: bool) -> ModelStatus {
             .map(|a| a.size_bytes.min(u32::MAX as u64) as u32)
             .unwrap_or(0),
         licenses: license_rows(entry),
-        source_url: entry.source_url.clone(),
+        source_url: if cfg!(target_os = "windows") && entry.id == "mt-hymt2" {
+            Some("https://modelscope.cn/models/Tencent-Hunyuan/Hy-MT2-1.8B".into())
+        } else {
+            entry.source_url.clone()
+        },
         missing: Vec::new(),
     }
 }

@@ -51,6 +51,10 @@ export function useModels(): ModelsState {
   useEffect(() => {
     let disposed = false
     void refresh()
+    const onFocus = () => {
+      void refresh()
+    }
+    window.addEventListener('focus', onFocus)
 
     const unlisten = on<ModelJobStatus>(EVENT.modelsProgress, (payload) => {
       if (disposed) return
@@ -67,6 +71,7 @@ export function useModels(): ModelsState {
 
     return () => {
       disposed = true
+      window.removeEventListener('focus', onFocus)
       void unlisten.then((fn) => fn())
     }
   }, [refresh])

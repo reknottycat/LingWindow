@@ -17,6 +17,7 @@ LANGUAGES = dict(zip(
      'Czech', 'Dutch', 'Khmer', 'Burmese', 'Persian', 'Gujarati', 'Urdu', 'Telugu',
      'Marathi', 'Hebrew', 'Bengali', 'Tamil', 'Ukrainian', 'Tibetan', 'Kazakh',
      'Mongolian', 'Uyghur', 'Cantonese']))
+LANGUAGES['fil'] = LANGUAGES['tl']
 
 
 def validate_request(request):
@@ -33,6 +34,8 @@ def validate_request(request):
         raise ValueError('翻译文本不能为空')
     if len(text) > MAX_CHARS:
         raise ValueError('翻译文本超过 2000 字符限制，请缩短字幕分句')
+    if source == target:
+        raise ValueError('source and target must differ')
     return source, target, text
 
 

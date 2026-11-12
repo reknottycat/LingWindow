@@ -1,6 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::mpsc::{RecvTimeoutError, Sender};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -545,6 +545,7 @@ pub struct SessionState {
     first_text_logged: AtomicBool,
     audio_started_at: Arc<Mutex<Option<Instant>>>,
     teardown_active: AtomicBool,
+    user_stop_epoch: AtomicU64,
     preview_render: Mutex<Option<(String, Instant)>>,
 }
 
@@ -666,6 +667,24 @@ pub fn start(
     cfg: SessionConfig,
     source: audio::AudioSourceKind,
     devices: audio::DeviceSelection,
+) -> Result<(), CmdError> {
+    start_with_epoch(
+        app,
+        cfg,
+        source,
+        devices,
+        app.state::<SessionState>()
+            .user_stop_epoch
+            .load(Ordering::SeqCst),
+    )
+}
+
+fn start_with_epoch(
+    app: &AppHandle,
+    cfg: SessionConfig,
+    source: audio::AudioSourceKind,
+    devices: audio::DeviceSelection,
+    expected_stop_epoch: u64,
 ) -> Result<(), CmdError> {
     let mut cfg = cfg;
     let prefs = crate::prefs::load(app);
@@ -1053,12 +1072,19 @@ pub fn start(
         "转写会话已开始"
     );
 
-    let _ = events.send(UiEvent::Status(TaskStatus::Capturing));
+    let capture_events = events.clone();
 
-    *state
+    let mut running = state
         .running
         .lock()
-        .expect("session running mutex poisoned") = Some(RunningSession {
+        .expect("session running mutex poisoned");
+    if state.user_stop_epoch.load(Ordering::SeqCst) != expected_stop_epoch {
+        capture.request_stop();
+        return Err(CmdError::Failed(
+            "Start cancelled by user Stop; capture remains stopped".into(),
+        ));
+    }
+    *running = Some(RunningSession {
         config: cfg.clone(),
         devices: devices.clone(),
         capture,
@@ -1075,6 +1101,8 @@ pub fn start(
     });
     queue_guard.disarm();
     state.set_status(TaskStatus::Capturing);
+    let _ = capture_events.send(UiEvent::Status(TaskStatus::Capturing));
+    drop(running);
 
     crate::telemetry::track(
         app,
@@ -1098,6 +1126,9 @@ pub fn start(
 }
 
 pub fn stop(app: &AppHandle) -> Result<(), String> {
+    app.state::<SessionState>()
+        .user_stop_epoch
+        .fetch_add(1, Ordering::SeqCst);
     stop_with_reason(app, "user")
 }
 
@@ -1108,6 +1139,10 @@ pub fn set_direction(
     target: String,
     script: crate::config::ZhScript,
 ) -> Result<crate::config::Preferences, CmdError> {
+    let stop_epoch = app
+        .state::<SessionState>()
+        .user_stop_epoch
+        .load(Ordering::SeqCst);
     let old = crate::prefs::load(app);
     if !crate::config::source_lang_allowed(
         old.translate_engine,
@@ -1158,12 +1193,14 @@ pub fn set_direction(
         p.zh_script = script;
     })
     .map_err(CmdError::Failed)?;
-    if let Some((mut cfg, source_kind, devices)) = resume {
+    if let Some((mut cfg, source_kind, devices)) =
+        resume.filter(|_| state.user_stop_epoch.load(Ordering::SeqCst) == stop_epoch)
+    {
         cfg.asr.source_lang = source.clone();
         cfg.translate.source_lang = source;
         cfg.translate.target_lang = target;
         cfg.translate.zh_script = script;
-        if let Err(error) = start(app, cfg, source_kind, devices) {
+        if let Err(error) = start_with_epoch(app, cfg, source_kind, devices, stop_epoch) {
             let _ = crate::prefs::update(app, |p| {
                 p.source_lang = old.source_lang.clone();
                 p.target_lang = old.target_lang.clone();

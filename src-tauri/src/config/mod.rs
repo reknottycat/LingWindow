@@ -1206,6 +1206,7 @@ mod tests {
         let local = Preferences {
             translate_engine: TranslateEngine::LocalNmt,
             asr_model_tier: AsrModelTier::Qwen3,
+            mt_model_tier: MtModelTier::Base,
             source_lang: "ja".into(),
             target_lang: "zh".into(),
             ..Default::default()
